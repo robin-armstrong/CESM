@@ -1,8 +1,8 @@
  &MOM_input_nml
          output_directory = './',
-         input_filename = 'n'
-         restart_input_dir = 'INPUT/',
-         restart_output_dir = 'RESTART/',
+         input_filename = 'r'
+         restart_input_dir = 'RESTART/DART_input',
+         restart_output_dir = 'RESTART/DART_output',
          parameter_filename = 'MOM_input',
                               'MOM_override',
                               'MOM_override2' /
