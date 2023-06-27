@@ -5,7 +5,6 @@
 # important filesystem paths
 MOM6_BIN=../../../build/intel/MOM6/MOM6                                     # the MOM6 binary
 DART_MODEL_DIR=../../../../../../../../DART/models/MARBL_MOM6_1D            # location of DART model information
-DART_OBS_DIR=../../../../../../../../DART/observations/obs_converters/BATS  # location of DART obs-seq generating files
 INPUT_RES_DIR=$(pwd)/RESTART/DART_filter_input                              # location of input restart files for DART
 OUTPUT_RES_DIR=$(pwd)/RESTART/DART_filter_output                            # location of output restart files for DART
 BASE_RES_FILE=$(pwd)/RESTART/DART_baseline_restart/MOM.res.nc               # baseline restart file to initialize ensemble
@@ -34,9 +33,16 @@ for i in $(seq ${ENS_SIZE}); do
     echo "${OUTPUT_RES_DIR}/output_$(printf "%04d" $i).nc" >> ${DART_MODEL_DIR}/work/filter_output_list.txt
 done
 
-echo "generating the observation sequence file..."
+echo "determining the initial model time..."
 
-back=$(pwd)
-cd ${DART_OBS_DIR}/work
-./text_to_obs
-cd ${back}
+timestr=$(ncdump ${BASE_RES_FILE} | grep "Time = [1234567890]* ;")
+timestr_length=${#timestr}
+let timestr_lastindex=${timestr_length}-2
+let timestamp_length=${timestr_lastindex}-8
+init_day_mom6=${timestr:8:${timestamp_length}}
+
+echo "determined the initial model time to be "$(printf %06d ${init_day_mom6})" (MOM6 calendar)..."
+
+let init_day_dart=${init_day_mom6}+139157
+
+echo "                                        "${init_day_dart}" (DART calendar)..."
