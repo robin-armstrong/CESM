@@ -68,8 +68,8 @@ let timestamp_length=${timestr_lastindex}-8
 currentday_mom6=${timestr:8:${timestamp_length}}
 let currentday_dart=${currentday_mom6}+${MOM6_TO_DART}
 
-echo "determined the initial model time to be ${currentday_mom6} (MOM6 calendar)"
-echo "                                        ${currentday_dart} (DART calendar)"
+echo "determined the initial model time to be ${currentday_mom6} (MOM6 calendar),"
+echo "                                        ${currentday_dart} (DART calendar)."
 
 echo "determining the day of the last available observation..."
 
@@ -77,8 +77,8 @@ last_obsseq_file=$(ls ${OBSSEQ_DIR}/out | tail -n 1)
 lastday_dart=${last_obsseq_file:5:6}
 let lastday_mom6=${lastday_dart}-${MOM6_TO_DART}
 
-echo "determined the day of the last available observation to be ${lastday_mom6} (MOM6 calendar)..."
-echo "                                                           ${lastday_dart} (DART calendar)..."
+echo "determined the day of the last available observation to be ${lastday_mom6} (MOM6 calendar),"
+echo "                                                           ${lastday_dart} (DART calendar)."
 
 read -p "simulate until day of last observation? [y/n] " userchoice
 
@@ -88,7 +88,10 @@ then
     let lastday_mom6=${lastday_dart}-${MOM6_TO_DART}
 fi
 
-echo "will simulate until day ${lastday_dart}."
+echo "will simulate until day ${lastday_dart} (DART calendar),"
+echo "                        ${lastday_mom6} (MOM6 calendar)."
+
+exit
 
 echo "setting perturb_from_single_instance = .true. ..."
 sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .true./" ${DART_MODEL_DIR}/work/input.nml
