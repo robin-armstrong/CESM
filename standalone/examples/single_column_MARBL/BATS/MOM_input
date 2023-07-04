@@ -31,7 +31,7 @@ SPLIT = False                   !   [Boolean] default = True
 USE_REGRIDDING = True           !   [Boolean] default = False
                                 ! If True, use the ALE algorithm (regridding/remapping). If False, use the
                                 ! layered isopycnal algorithm.
-DT = 3600.0                     !   [s]
+DT = 100.0                     !   [s] (default is 3600.0)
                                 ! The (baroclinic) dynamics time step.  The time-step that is actually used will
                                 ! be an integer fraction of the forcing time-step (DT_FORCING in ocean-only mode
                                 ! or the coupling timestep in coupled mode.)
@@ -368,7 +368,7 @@ GUST_CONST = 0.02               !   [Pa] default = 0.0
                                 ! The background gustiness in the winds.
 
 ! === module MOM_main (MOM_driver) ===
-DAYMAX = 3660                      !   [days]
+DAYMAX = 3651                      !   [days]
                                 ! The final time of the whole simulation, in units of TIMEUNIT seconds.  This
                                 ! also sets the potential end time of the present run segment if the end time is
                                 ! not set via ocean_solo_nml in input.nml.
@@ -381,6 +381,8 @@ RESTINT = 3650.0                !   [days] default = 0.0
                                 ! The interval between saves of the restart file in units of TIMEUNIT.  Use 0
                                 ! (the default) to not save incremental restart files at all.
 
+RESTART_CHECKSUMS_REQUIRED = False
+
 ! === module MOM_write_cputime ===
 MAXCPU = 2.88E+04               !   [wall-clock seconds] default = -1.0
                                 ! The maximum amount of cpu time per processor for which MOM should run before
@@ -391,11 +393,11 @@ MAXCPU = 2.88E+04               !   [wall-clock seconds] default = -1.0
                                 ! processors used.
 
 ! Debugging parameters set to non-default values
-U_TRUNC_FILE = "U_velocity_truncations" ! default = ""
+U_TRUNC_FILE = "" ! default = ""
                                 ! The absolute path to a file into which the accelerations leading to zonal
                                 ! velocity truncations are written. Undefine this for efficiency if this
                                 ! diagnostic is not needed.
-V_TRUNC_FILE = "V_velocity_truncations" ! default = ""
+V_TRUNC_FILE = "" ! default = ""
                                 ! The absolute path to a file into which the accelerations leading to meridional
                                 ! velocity truncations are written. Undefine this for efficiency if this
                                 ! diagnostic is not needed.
