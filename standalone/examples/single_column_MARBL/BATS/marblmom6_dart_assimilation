@@ -1,0 +1,17 @@
+back=$(pwd)
+
+cd /glade/u/home/rarmstrong/work/DART/models/MARBL_MOM6_1D/work
+./filter >> /glade/scratch/rarmstrong/marbl_mom6_dart_temp/dart_output.txt
+cd ${back}
+
+sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .false./" /glade/u/home/rarmstrong/work/DART/models/MARBL_MOM6_1D/work/input.nml
+
+if grep -q 'ERROR' /glade/scratch/rarmstrong/marbl_mom6_dart_temp/dart_output.txt
+then
+    rm /glade/scratch/rarmstrong/marbl_mom6_dart_temp/dart_output.txt
+    touch .assimilation_failed
+    exit
+fi
+
+rm /glade/scratch/rarmstrong/marbl_mom6_dart_temp/dart_output.txt
+touch .assimilation_complete
