@@ -3,17 +3,17 @@
 # ======================= SCRIPT PARAMETERS =======================
 
 # MOM6 binary, keep this path absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
 
 # important filesystem paths, keep these absolute
 MOM6_BATS_DIR=$(pwd)                         # working directory for MOM6
 OBSSEQ_DIR=~/work/BATS_obsseq                       # location of obs-sequence files
 
-# ensemble size (this should match the value in ${MOM6_BATS_DIR}/DART/input.nml)
-ENS_SIZE=5
+# ensemble size
+ENS_SIZE=30
 
 # other
-LASTDAY_DART=142818     # last day of simulation (DART calendar)
+LASTDAY_DART=142852     # last day of simulation (DART calendar)
 MOM6_TO_DART=139157     # offset between MOM6 and DART calendars
 MOM6_TIMESTEP=100.0     # timestep (seconds) to use when advancing ensemble members
 
@@ -44,6 +44,20 @@ for i in $(seq ${ENS_SIZE}); do
     echo "${ensemble_subdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_members.txt
 done
 
+echo "configuring the DART namelist file..."
+
+sed -i "s%template_file = .*%template_file = '${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc',%" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s%input_state_files = .*%input_state_files = '',%" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s%input_state_file_list = .*%input_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_members.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s%output_state_files = .*%output_state_files = '',%" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s%output_state_file_list = .*%output_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_members.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s/ens_size = .*/ens_size = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s/num_output_state_members = .*/num_output_state_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+
+exit
+
 echo "initializing the ensemble members..."
 
 for i in $(seq ${ENS_SIZE}); do
@@ -58,6 +72,7 @@ for i in $(seq ${ENS_SIZE}); do
     cp ${baseline_subdir}/data_table ${ensemble_subdir}/data_table
     cp ${baseline_subdir}/diag_table ${ensemble_subdir}/diag_table
     cp ${baseline_subdir}/input.nml ${ensemble_subdir}/input.nml
+    cp ${baseline_subdir}/ocean_geometry.nc ${ensemble_subdir}/ocean_geometry.nc
 
     sed -i "s/input_filename = .*/input_filename = 'r',/" ${ensemble_subdir}/input.nml
     sed -i "s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${ensemble_subdir}/input.nml
@@ -80,7 +95,7 @@ export TMPDIR=/glade/scratch/${USER}/marbl_mom6_dart_temp
 mkdir -p ${TMPDIR}
 
 echo "setting perturb_from_single_instance = .true. in DART..."
-sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .true./" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .true.,/" ${MOM6_BATS_DIR}/DART/input.nml
 
 echo "beginning the assimilation loop..."
 
@@ -95,8 +110,8 @@ do
     then
         echo "found file, assimilating with DART..."
 
-        sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name         ='\\${OBSSEQ_DIR}/BATS_${currentday_dart}.out',%" ${MOM6_BATS_DIR}/DART/input.nml
-        sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name        ='\\${MOM6_BATS_DIR}/output/${currentday_dart}.final',%" ${MOM6_BATS_DIR}/DART/input.nml
+        sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='\\${OBSSEQ_DIR}/BATS_${currentday_dart}.out',%" ${MOM6_BATS_DIR}/DART/input.nml
+        sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='\\${MOM6_BATS_DIR}/output/${currentday_dart}.final',%" ${MOM6_BATS_DIR}/DART/input.nml
 
         cd ${MOM6_BATS_DIR}/DART
 
