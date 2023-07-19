@@ -9,10 +9,10 @@ sed -i "s%input_state_files = .*%input_state_files = '',%" ../input.nml
 sed -i "s%input_state_file_list = .*%input_state_file_list = 'testing/test_ensemble/input/ensemble_members_in.txt',%" ../input.nml
 sed -i "s%output_state_files = .*%output_state_files = '',%" ../input.nml
 sed -i "s%output_state_file_list = .*%output_state_file_list = 'testing/test_ensemble/output/ensemble_members_out.txt',%" ../input.nml
-sed -i "s/ens_size = .*/ens_size = 30,/" ../input.nml
-sed -i "s/num_output_state_members = .*/num_output_state_members = 30,/" ../input.nml
-sed -i "s/num_output_obs_members = .*/num_output_obs_members = 30,/" ../input.nml
-sed -i "s/num_output_obs_members = .*/num_output_obs_members = 30,/" ../input.nml
+sed -i "s/ens_size = .*/ens_size = 10,/" ../input.nml
+sed -i "s/num_output_state_members = .*/num_output_state_members = 10,/" ../input.nml
+sed -i "s/num_output_obs_members = .*/num_output_obs_members = 10,/" ../input.nml
+sed -i "s/num_output_obs_members = .*/num_output_obs_members = 10,/" ../input.nml
 sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .false.,/" ../input.nml
 sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name = 'testing/test_obs/obs_seq.out',%" ../input.nml
 sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name = 'testing/test_output/obs_seq.final',%" ../input.nml

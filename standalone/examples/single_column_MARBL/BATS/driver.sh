@@ -6,18 +6,21 @@
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
 
 # important filesystem paths, keep these absolute
-MOM6_BATS_DIR=$(pwd)                         # working directory for MOM6
-OBSSEQ_DIR=~/work/BATS_obsseq                       # location of obs-sequence files
+MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
+OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 
 # ensemble size
-ENS_SIZE=30
+ENS_SIZE=80
 
 # other
-LASTDAY_DART=142852     # last day of simulation (DART calendar)
+LASTDAY_DART=147800     # last day of simulation (DART calendar)
 MOM6_TO_DART=139157     # offset between MOM6 and DART calendars
-MOM6_TIMESTEP=100.0     # timestep (seconds) to use when advancing ensemble members
+MOM6_LARGESTEP=3600.0   # larger timestep (seconds) to use when advancing ensemble members
+MOM6_SMALLSTEP=200.0    # smaller timestep (seconds) to use when advancing ensemble members
 
 # ======================= MAIN PROGRAM =======================
+
+init_seconds=${SECONDS}
 
 echo ""
 echo "================================================================"
@@ -31,7 +34,7 @@ rm -rf ${MOM6_BATS_DIR}/ensemble/member_*
 
 echo "deleting old DART output files..."
 
-rm -f ${MOM6_BATS_DIR}/output/*
+rm -rf ${MOM6_BATS_DIR}/output/*
 
 echo "resetting the restart file list..."
 
@@ -56,8 +59,6 @@ sed -i "s/num_output_state_members = .*/num_output_state_members = ${ENS_SIZE},/
 sed -i "s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
 sed -i "s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
 
-exit
-
 echo "initializing the ensemble members..."
 
 for i in $(seq ${ENS_SIZE}); do
@@ -76,6 +77,12 @@ for i in $(seq ${ENS_SIZE}); do
 
     sed -i "s/input_filename = .*/input_filename = 'r',/" ${ensemble_subdir}/input.nml
     sed -i "s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${ensemble_subdir}/input.nml
+done
+
+echo "setting MOM6 timestep to ${MOM6_LARGESTEP} seconds for each ensemble member..."
+
+for i in $(seq ${ENS_SIZE}); do
+    sed -i "s/DT = .*/DT = ${MOM6_LARGESTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
 done
 
 echo "determining the initial model time..."
@@ -110,8 +117,11 @@ do
     then
         echo "found file, assimilating with DART..."
 
+        outputdir=${MOM6_BATS_DIR}/output/${currentday_dart}
+        mkdir ${outputdir}
+
         sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='\\${OBSSEQ_DIR}/BATS_${currentday_dart}.out',%" ${MOM6_BATS_DIR}/DART/input.nml
-        sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='\\${MOM6_BATS_DIR}/output/${currentday_dart}.final',%" ${MOM6_BATS_DIR}/DART/input.nml
+        sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='\\${outputdir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
 
         cd ${MOM6_BATS_DIR}/DART
 
@@ -129,17 +139,19 @@ do
         echo "================================================================"
         echo ""
 
-        mv ${MOM6_BATS_DIR}/DART/dart_log.out ${MOM6_BATS_DIR}/output/${currentday_dart}_dart_log.out
-        mv ${MOM6_BATS_DIR}/DART/output_mean.nc ${MOM6_BATS_DIR}/output/${currentday_dart}_output_mean.nc
-        mv ${MOM6_BATS_DIR}/DART/output_sd.nc ${MOM6_BATS_DIR}/output/${currentday_dart}_output_sd.nc
+        mv ${MOM6_BATS_DIR}/DART/dart_log.out ${outputdir}
+        mv ${MOM6_BATS_DIR}/DART/output_mean.nc ${outputdir}
+        mv ${MOM6_BATS_DIR}/DART/output_sd.nc ${outputdir}
+        mv ${MOM6_BATS_DIR}/DART/preassim* ${outputdir}
+        mv ${MOM6_BATS_DIR}/DART/analysis* ${outputdir}
 
         if ! ${first_assimilation_complete} 
         then
             first_assimilation_complete=true
-            echo "setting MOM6 timestep to ${MOM6_TIMESTEP} seconds for each ensemble member..."
+            echo "setting MOM6 timestep to ${MOM6_SMALLSTEP} seconds for each ensemble member..."
 
             for i in $(seq ${ENS_SIZE}); do
-                sed -i "s/DT = .*/DT = ${MOM6_TIMESTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
+                sed -i "s/DT = .*/DT = ${MOM6_SMALLSTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
             done
         fi
     else
@@ -168,6 +180,13 @@ do
 
     echo ""
     echo "finished advancing the ensemble."
+    
+    current_seconds=${SECONDS}
+    let diff=${current_seconds}-${init_seconds}
+
+    echo ""
+    echo "time since start: ${diff} seconds."
+    echo ""
 
     currentday_mom6=${tomorrow_mom6}
     currentday_dart=${tomorrow_dart}
