@@ -36,8 +36,8 @@ rm ${MOM6_BATS_DIR}/DART/ensemble_members.txt
 
 echo "configuring baseline MARBL + MOM6 namelist to read from BATS..."
 
-sed -i "s/input_filename = .*/input_filename = 'n',/" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
-sed -i "s%restart_input_dir = .*%restart_input_dir = 'INPUT/',%" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
+sed -i "3 s/input_filename = .*/input_filename = 'n',/" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
+sed -i "4 s%restart_input_dir = .*%restart_input_dir = 'INPUT/',%" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
 
 num_members_created=0
 first_integration_complete=false
@@ -46,7 +46,7 @@ while [ ${num_members_created} -lt ${ENS_SIZE} ]
 do
     echo "advancing the model to day ${first_sample_day}..."
 
-    sed -i "s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
+    sed -i "371 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
     back=$(pwd)
     cd ${MOM6_BATS_DIR}/ensemble/baseline
 
@@ -73,8 +73,8 @@ do
 
         echo "configuring baseline MARBL + MOM6 namelist to read from restart file..."
 
-        sed -i "s/input_filename = .*/input_filename = 'r',/" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
-        sed -i "s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
+        sed -i "3 s/input_filename = .*/input_filename = 'r',/" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
+        sed -i "4 s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
     fi
 
     echo "sampling ${SAMPLES_PER_YEAR} ensemble members over the next ${SAMPLES_PER_YEAR} days..."
@@ -103,7 +103,7 @@ do
         echo "${memberdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_members.txt
         
         let currentday=${currentday}+${DAYS_BETWEEN_SAMPLES}
-        sed -i "s/DAYMAX = .*/DAYMAX = ${currentday}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
+        sed -i "371 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
 
         echo "advancing the model to day ${currentday}..."
 

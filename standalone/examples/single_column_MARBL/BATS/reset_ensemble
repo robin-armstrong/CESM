@@ -1,0 +1,6 @@
+if [ -d "ensemble_backup" ]; then
+	rm -rf ensemble; cp -r ensemble_backup ensemble
+else
+	echo "ERROR: directory 'ensemble_backup' must exist."
+fi
+
