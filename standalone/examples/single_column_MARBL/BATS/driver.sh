@@ -10,13 +10,12 @@ MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
 OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 
 # ensemble size
-ENS_SIZE=80
+ENS_SIZE=3
 
 # other
 LASTDAY_DART=147800     # last day of simulation (DART calendar)
 MOM6_TO_DART=139157     # offset between MOM6 and DART calendars
-MOM6_LARGESTEP=3600.0   # larger timestep (seconds) to use when advancing ensemble members
-MOM6_SMALLSTEP=200.0    # smaller timestep (seconds) to use when advancing ensemble members
+MOM6_TIMESTEP=3600.0    # timestep (seconds) to use when advancing ensemble members
 
 # ======================= MAIN PROGRAM =======================
 
@@ -28,24 +27,14 @@ echo "============================ DRIVER ============================"
 echo "================================================================"
 echo ""
 
-echo "deleting old ensemble data files..."
+echo "backing up the initial ensemble..."
 
-rm -rf ${MOM6_BATS_DIR}/ensemble/member_*
+rm -rf ${MOM6_BATS_DIR}/ensemble_backup
+cp -r ${MOM6_BATS_DIR}/ensemble ensemble_backup
 
 echo "deleting old DART output files..."
 
 rm -rf ${MOM6_BATS_DIR}/output/*
-
-echo "resetting the restart file list..."
-
-touch ${MOM6_BATS_DIR}/DART/ensemble_members.txt
-truncate -s 0 ${MOM6_BATS_DIR}/DART/ensemble_members.txt
-
-for i in $(seq ${ENS_SIZE}); do
-    ensemble_subdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
-    mkdir ${ensemble_subdir}
-    echo "${ensemble_subdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_members.txt
-done
 
 echo "configuring the DART namelist file..."
 
@@ -58,36 +47,17 @@ sed -i "s/ens_size = .*/ens_size = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nm
 sed -i "s/num_output_state_members = .*/num_output_state_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
 sed -i "s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
 sed -i "s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .false.,/" ${MOM6_BATS_DIR}/DART/input.nml
 
-echo "initializing the ensemble members..."
-
-for i in $(seq ${ENS_SIZE}); do
-    ensemble_subdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
-    baseline_subdir=${MOM6_BATS_DIR}/ensemble/baseline
-
-    cp -r ${baseline_subdir}/RESTART ${ensemble_subdir}/RESTART
-    cp -r ${baseline_subdir}/INPUT ${ensemble_subdir}/INPUT
-    cp ${baseline_subdir}/MOM_input ${ensemble_subdir}/MOM_input
-    cp -r ${baseline_subdir}/MOM_override ${ensemble_subdir}/MOM_override
-    cp ${baseline_subdir}/MOM_override2 ${ensemble_subdir}/MOM_override2
-    cp ${baseline_subdir}/data_table ${ensemble_subdir}/data_table
-    cp ${baseline_subdir}/diag_table ${ensemble_subdir}/diag_table
-    cp ${baseline_subdir}/input.nml ${ensemble_subdir}/input.nml
-    cp ${baseline_subdir}/ocean_geometry.nc ${ensemble_subdir}/ocean_geometry.nc
-
-    sed -i "s/input_filename = .*/input_filename = 'r',/" ${ensemble_subdir}/input.nml
-    sed -i "s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${ensemble_subdir}/input.nml
-done
-
-echo "setting MOM6 timestep to ${MOM6_LARGESTEP} seconds for each ensemble member..."
+echo "setting MOM6 timestep to ${MOM6_TIMESTEP} seconds for each ensemble member..."
 
 for i in $(seq ${ENS_SIZE}); do
-    sed -i "s/DT = .*/DT = ${MOM6_LARGESTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
+    sed -i "s/DT = .*/DT = ${MOM6_TIMESTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
 done
 
 echo "determining the initial model time..."
 
-timestr=$(ncdump ${MOM6_BATS_DIR}/ensemble/baseline/RESTART/MOM.res.nc | grep "Time = [0123456789]* ;")
+timestr=$(ncdump ${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc | grep "Time = [0123456789]* ;")
 timestr_length=${#timestr}
 let timestr_lastindex=${timestr_length}-2
 let timestamp_length=${timestr_lastindex}-8
@@ -101,12 +71,7 @@ echo "preparing temp directory..."
 export TMPDIR=/glade/scratch/${USER}/marbl_mom6_dart_temp
 mkdir -p ${TMPDIR}
 
-echo "setting perturb_from_single_instance = .true. in DART..."
-sed -i "s/perturb_from_single_instance = .*/perturb_from_single_instance = .true.,/" ${MOM6_BATS_DIR}/DART/input.nml
-
 echo "beginning the assimilation loop..."
-
-first_assimilation_complete=false
 
 while [ $currentday_dart -lt $LASTDAY_DART ]
 do
@@ -144,16 +109,6 @@ do
         mv ${MOM6_BATS_DIR}/DART/output_sd.nc ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/preassim* ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/analysis* ${outputdir}
-
-        if ! ${first_assimilation_complete} 
-        then
-            first_assimilation_complete=true
-            echo "setting MOM6 timestep to ${MOM6_SMALLSTEP} seconds for each ensemble member..."
-
-            for i in $(seq ${ENS_SIZE}); do
-                sed -i "s/DT = .*/DT = ${MOM6_SMALLSTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
-            done
-        fi
     else
         echo "no file found."
     fi
@@ -173,7 +128,7 @@ do
         echo "advancing ensemble member ${i}..."
         cd ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
         rm -f logfile.txt
-        ${MOM6_BIN} >> logfile.txt &
+        ${MOM6_BIN} #>> logfile.txt &
     done
 
     wait

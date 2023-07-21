@@ -39,14 +39,14 @@
    output_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_members.txt',
    output_interval              = 1,
    output_members               = .true.,
-   num_output_state_members = 80,
+   num_output_state_members = 3,
    output_mean                  = .true.,
    output_sd                    = .true.,
    write_all_stages_at_end = .true.,
 
-   ens_size = 80,
+   ens_size = 3,
    num_groups                   = 1,
-   perturb_from_single_instance = .true.,
+   perturb_from_single_instance = .false.,
    perturbation_amplitude       = 1e-2,
    distributed_state            = .true.,
 
@@ -55,7 +55,7 @@
 
    obs_sequence_in_name ='/glade/u/home/rarmstrong/work/BATS_obsseq/BATS_147613.out',
    obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/output/147613/obs_seq.final',
-   num_output_obs_members = 80,
+   num_output_obs_members = 3,
    init_time_days               = -1,
    init_time_seconds            = -1,
    first_obs_days               = -1,

@@ -1,6 +1,8 @@
 logfile.txt
 submit_job.sh
 output/*
+ensemble/member*
+ensemble_backup
 DART/ensemble_members.txt
 marblmom6_dart_1d.e*
 marblmom6_dart_1d.o*
