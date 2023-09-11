@@ -6,3 +6,6 @@
 */ocean.stats
 */time_stamp.out
 */MARBL_test.o*
+BATS_openloop
+BATS_longrun
+

@@ -7,10 +7,10 @@ MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build
 MOM6_BATS_DIR=$(pwd)
 
 # ensemble size
-ENS_SIZE=3
+ENS_SIZE=80
 
-SAMPLES_PER_YEAR=3      # the number of ensemble members that will be sampled from each year
-DAYS_BETWEEN_SAMPLES=5  # the days between sampling ensemble members in a given year
+SAMPLES_PER_YEAR=5      # the number of ensemble members that will be sampled from each year
+DAYS_BETWEEN_SAMPLES=10 # the days between sampling ensemble members in a given year
 
 # the day when the assimilation loop will start (MOM6 calendar)
 FIRSTDAY_MOM6=8455
@@ -133,3 +133,4 @@ done
 
 echo "finished initializing the ensemble."
 echo "exiting..."
+echo ""

@@ -1,10 +1,15 @@
-logfile.txt
-submit_job.sh
+submit_driver.sh
+driver_logfile.txt
+submit_initialization.sh
+initialization_logfile.txt
 output/*
+output_backup/*
 ensemble/member*
 ensemble_backup
 DART/ensemble_members.txt
 marblmom6_dart_1d.e*
 marblmom6_dart_1d.o*
 clean
+DART/obs_diag_files/*
 
+explain_the_date_to_me
