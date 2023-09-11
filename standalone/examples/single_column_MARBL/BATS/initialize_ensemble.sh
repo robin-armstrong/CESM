@@ -88,7 +88,7 @@ do
 
         memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${num_members_created})
         mkdir ${memberdir}
-        cp -r ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
+        cp -Lr ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
         rm ${memberdir}/RESTART/ocean_solo.res
 
         echo "correcting the timestamp for member ${num_members_created}..."
