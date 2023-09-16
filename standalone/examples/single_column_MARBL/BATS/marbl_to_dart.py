@@ -11,11 +11,11 @@ numlayers = 65
 ################### MAIN PROGRAM ########################
 
 marbl_in = sys.argv[1]      # path to the parameter list text file
-out_file = sys.argv[2]      # path for the netCDF file being created
+dart_out = sys.argv[2]      # path for the netCDF file being created
 timeval  = sys.argv[3]      # simulation time which the parameters correspond to
 
 # setting up the NetCDF file
-ncfile     = nc.Dataset(out_file, "w")
+ncfile     = nc.Dataset(dart_out, "w")
 layer      = ncfile.createDimension("Layer", size = numlayers)
 timedim    = ncfile.createDimension("Time", size = 1)
 timevar    = ncfile.createVariable("Time", 'i8', ("Time",))
@@ -48,3 +48,6 @@ for line in paramfile.readlines():
             pval       = float(pval_array[0])
             
             ncparams[i][:] = pval*np.ones(numlayers)
+
+paramfile.close()
+ncfile.close()
