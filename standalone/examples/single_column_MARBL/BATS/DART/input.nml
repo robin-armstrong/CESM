@@ -139,9 +139,10 @@
    /
 
 &model_nml
-   template_file = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MOM.res.nc',
-   time_step_days      = 1,
-   time_step_seconds   = 0,
+   state_template_file   = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MOM.res.nc',
+   param_template_file   = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MARBL.params.nc',
+   time_step_days        = 1,
+   time_step_seconds     = 0,
    model_state_variables = 'NO3      ', 'QTY_NITRATE_CONCENTRATION     ', '0.0', 'NA', 'UPDATE      ',
                            'SiO3     ', 'QTY_DISSOLVED_INORGANIC_SIO3  ', '0.0', 'NA', 'UPDATE      ',
                            'PO4      ', 'QTY_PHOSPHATE_CONCENTRATION   ', '0.0', 'NA', 'UPDATE      ',
@@ -155,6 +156,8 @@
                            'microzooC', 'QTY_MICROZOOPLANKTON_CARBON   ', '0.0', 'NA', 'UPDATE      ',
                            'mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'UPDATE      ',
                            'h        ', 'QTY_LAYER_THICKNESS           ', '0.0', 'NA', 'NO_COPY_BACK'
+   estimate_params       = .true.,
+   model_parameters      = '', '', '', ''
    /
 
 &utilities_nml
