@@ -1,7 +1,6 @@
 import sys
 import re
 import numpy as np
-import netCDF4 as nc
 
 ################### SCRIPT PARAMETERS ###################
 
@@ -34,21 +33,18 @@ paramlist = ["autotroph_settings(1)%kCO2",
              "autotroph_settings(4)%kPO4",
              "autotroph_settings(4)%kSiO3"]
 
-numlayers = 65
-
-def getvalue(param_array):
-    return param_array[0]
-
 ################### MAIN PROGRAM ########################
 
-dart_in   = nc.Dataset(sys.argv[1], "r")
-marbl_in  = open(sys.argv[2], "r")
+marbl_in  = open(sys.argv[1], "r")
+rng_seed  = sys.argv[2]
 marbl_out = open(sys.argv[3], "w")
 
-# regular expressions to extract parameter name from text
-pname_regex = re.compile(r'^[^\s]+')
+np.random.randn(rng_seed)
 
-# populating the parameter list
+# regular expressions to extract parameter name and value from text
+pname_regex = re.compile(r'^[^\s]+')
+pval_regex  = re.compile(r'[^\s]+$')
+
 for line in marbl_in.readlines():
     pname_array = re.findall(pname_regex, line)
 
@@ -62,11 +58,15 @@ for line in marbl_in.readlines():
     for i in range(len(paramlist)):
         if(pname == paramlist[i]):
             in_paramlist = True
-            marbl_out.write(pname + " = " + str(getvalue(dart_in[pname][:])) + "\n")
+            pval_array   = re.findall(pval_regex, line)
+            pval         = float(pval_array[0])
+
+            # applying a log-normal multiplicative perturbation
+            pval *= np.exp(.01*pval*np.random.randn())
+            marbl_out.write(pname + " = " + str(pval) + "\n")
     
     if(not in_paramlist):
         marbl_out.write(line)
 
-marbl_out.close()
 marbl_in.close()
-dart_in.close()
+marbl_out.close()
