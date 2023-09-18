@@ -15,6 +15,9 @@ DAYS_BETWEEN_SAMPLES=10 # the days between sampling ensemble members in a given 
 # the day when the assimilation loop will start (MOM6 calendar)
 FIRSTDAY_MOM6=8455
 
+# random number seed for creating the initial perturbations
+SEED=1
+
 # ======================= MAIN PROGRAM =======================
 
 echo ""
@@ -100,7 +103,7 @@ do
         rm MOM.res.txt
 
         echo "adding member ${num_members_created} to the ensemble list..."
-        echo "${memberdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_members.txt
+        echo "${memberdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_states.txt
         
         let currentday=${currentday}+${DAYS_BETWEEN_SAMPLES}
         sed -i "371 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
@@ -129,6 +132,22 @@ do
     done
 
     let first_sample_day=${first_sample_day}+365
+done
+
+echo "perturbing the BGC parameters..."
+
+for i in $(seq ${ENS_SIZE}); do
+    memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/INPUT
+    
+    cp ${memberdir}/marbl_in ${memberdir}/marbl_in_temp
+    rm ${memberdir}/marbl_in
+    
+    let newseed=${SEED}+${i}
+    python3 ${MOM6_BATS_DIR}/perturb_params.py ${memberdir}/marbl_in_temp ${newseed} ${memberdir}/marbl_in
+    rm ${memberdir}/marbl_in_temp
+
+    python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/marbl_in ${FIRSTDAY_MOM6} ${memberdir}/marbl_params.nc
+    echo ${memberdir}/marbl_params.nc >> ${MOM6_BATS_DIR}/DART/ensemble_params.txt
 done
 
 echo "finished initializing the ensemble."

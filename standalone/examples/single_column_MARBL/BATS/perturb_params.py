@@ -39,7 +39,7 @@ marbl_in  = open(sys.argv[1], "r")
 rng_seed  = sys.argv[2]
 marbl_out = open(sys.argv[3], "w")
 
-np.random.randn(rng_seed)
+np.random.randn(int(rng_seed))
 
 # regular expressions to extract parameter name and value from text
 pname_regex = re.compile(r'^[^\s]+')
@@ -62,7 +62,7 @@ for line in marbl_in.readlines():
             pval         = float(pval_array[0])
 
             # applying a log-normal multiplicative perturbation
-            pval *= np.exp(.01*pval*np.random.randn())
+            pval *= np.exp(.1*np.random.randn())
             marbl_out.write(pname + " = " + str(pval) + "\n")
     
     if(not in_paramlist):

@@ -3,7 +3,7 @@
 # ======================= SCRIPT PARAMETERS =======================
 
 # if 'true', then the script will erase old DART outputs and start clean
-START_CLEAN=false
+START_CLEAN=true
 
 # MOM6 binary, keep this path absolute
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
@@ -40,24 +40,21 @@ if ${START_CLEAN}; then
 
     rm -rf ${MOM6_BATS_DIR}/output/*
     mkdir ${MOM6_BATS_DIR}/output/member_0001_archive
-    rm -f ${MOM6_BATS_DIR}/DART/template_priorinf_mean.nc
-    rm -f ${MOM6_BATS_DIR}/DART/template_priorinf_sd.nc
-    rm -f ${MOM6_BATS_DIR}/DART/input_priorinf_mean.nc
-    rm -f ${MOM6_BATS_DIR}/DART/input_priorinf_sd.nc
-    rm -f ${MOM6_BATS_DIR}/DART/output_priorinf_mean.nc
-    rm -f ${MOM6_BATS_DIR}/DART/output_priorinf_sd.nc
+    rm -f ${MOM6_BATS_DIR}/DART/template_priorinf*
+    rm -f ${MOM6_BATS_DIR}/DART/input_priorinf*
+    rm -f ${MOM6_BATS_DIR}/DART/output_priorinf*
 
     echo "configuring the DART namelist file..."
 
-    sed -i "142 s%template_file = .*%template_file = '${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc',%" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "32 s%input_state_files = .*%input_state_files = '',%" ${MOM6_BATS_DIR}/DART/input.nml
-    sed -i "33 s%input_state_file_list = .*%input_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_members.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "33 s%input_state_file_list = .*%input_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_states.txt', ${MOM6_BATS_DIR}/DART/ensemble_params.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "38 s%output_state_files = .*%output_state_files = '',%" ${MOM6_BATS_DIR}/DART/input.nml
-    sed -i "39 s%output_state_file_list = .*%output_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_members.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
-    sed -i "47 s/ens_size = .*/ens_size = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "39 s%output_state_file_list = .*%output_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_states.txt', ${MOM6_BATS_DIR}/DART/ensemble_params.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "42 s/num_output_state_members = .*/num_output_state_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
-    sed -i "58 s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "47 s/ens_size = .*/ens_size = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "49 s/perturb_from_single_instance = .*/perturb_from_single_instance = .false.,/" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "58 s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "142 s%state_template_file = .*%state_template_file = '${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc',%" ${MOM6_BATS_DIR}/DART/input.nml
 
     echo "generating inflation restart files..."
 
@@ -78,8 +75,8 @@ if ${START_CLEAN}; then
     echo "================================================================"
     echo ""
 
-    cp input_priorinf_mean.nc template_priorinf_mean.nc
-    cp input_priorinf_sd.nc template_priorinf_sd.nc
+    cp input_priorinf_mean_d01.nc template_priorinf_mean_d01.nc
+    cp input_priorinf_sd_d01.nc template_priorinf_sd_d01.nc
 
     cd ${back}
 fi
@@ -107,6 +104,8 @@ export TMPDIR=/glade/scratch/${USER}/marbl_mom6_dart_temp
 mkdir -p ${TMPDIR}
 
 echo "beginning the assimilation loop..."
+
+exit
 
 while [ $currentday_dart -lt $LASTDAY_DART ]
 do
@@ -143,8 +142,8 @@ do
         echo "================================================================"
         echo ""
 
-        ncks -A -v h template_priorinf_mean.nc output_priorinf_mean.nc
-        ncks -A -v h template_priorinf_sd.nc output_priorinf_sd.nc
+        ncks -A -v h template_priorinf_mean_d01.nc output_priorinf_mean_d01.nc
+        ncks -A -v h template_priorinf_sd_d01.nc output_priorinf_sd_d01.nc
 
         cd ${back}
 
@@ -156,8 +155,11 @@ do
         mv ${MOM6_BATS_DIR}/DART/input_priorinf* ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/output_priorinf* ${outputdir}
         
-        cp ${outputdir}/output_priorinf_mean.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean.nc
-        cp ${outputdir}/output_priorinf_sd.nc ${MOM6_BATS_DIR}/DART/input_priorinf_sd.nc
+        cp ${outputdir}/output_priorinf_mean_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d01.nc
+        cp ${outputdir}/output_priorinf_sd_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_sd_d01.nc
+
+        cp ${outputdir}/output_priorinf_mean_d02.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d02.nc
+        cp ${outputdir}/output_priorinf_sd_d02.nc ${MOM6_BATS_DIR}/DART/input_priorinf_sd_d02.nc
     else
         echo "no file found."
     fi

@@ -30,13 +30,13 @@
 &filter_nml
    single_file_in               = .false.,
    input_state_files = '',
-   input_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_members.txt',
+   input_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_states.txt', /glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_params.txt',
 
    stages_to_write  = 'preassim', 'analysis', 'output',
 
    single_file_out              = .false.,
    output_state_files = '',
-   output_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_members.txt',
+   output_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_states.txt', /glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/DART/ensemble_params.txt',
    output_interval              = 1,
    output_members               = .true.,
    num_output_state_members = 80,
@@ -45,7 +45,7 @@
    write_all_stages_at_end = .true.,
 
    ens_size = 80,
-   num_groups                   = 1,
+   num_groups                   = 2,
    perturb_from_single_instance = .false.,
    perturbation_amplitude       = 1e-2,
    distributed_state            = .true.,
@@ -90,7 +90,7 @@
    post_inf_mean     = 1.00,
    post_inf_sd       = 0.6,
 
-   input_state_files = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MOM.res.nc',
+   input_state_files = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/INPUT/marbl_params.nc',
    single_file       = .false.,
    verbose           = .false.
    /
@@ -132,15 +132,14 @@
                                 'TITRATION_ALKALINITY',
                                 'CATALYTIC_CARBON',
                                 'UV_OXY_NITROGEN',
-				'CFA_SILICATE',
-				'CFA_PHOSPHATE',
+				                    'CFA_SILICATE',
+				                    'CFA_PHOSPHATE',
                                 'CFA_NITRATE'
    evaluate_these_obs_types   = ''
    /
 
 &model_nml
-   state_template_file   = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MOM.res.nc',
-   param_template_file   = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MARBL.params.nc',
+   template_file         = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble/member_0001/INPUT/marbl_params.nc',
    time_step_days        = 1,
    time_step_seconds     = 0,
    model_state_variables = 'NO3      ', 'QTY_NITRATE_CONCENTRATION     ', '0.0', 'NA', 'UPDATE      ',
@@ -156,8 +155,31 @@
                            'microzooC', 'QTY_MICROZOOPLANKTON_CARBON   ', '0.0', 'NA', 'UPDATE      ',
                            'mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'UPDATE      ',
                            'h        ', 'QTY_LAYER_THICKNESS           ', '0.0', 'NA', 'NO_COPY_BACK'
-   estimate_params       = .true.,
-   model_parameters      = '', '', '', ''
+   estimate_params       = .true.
+   model_parameters      = 'autotroph_settings(1)%kCO2 ', 'QTY_PARAM_AUTOTROPH1_KCO2 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(1)%kFe  ', 'QTY_PARAM_AUTOTROPH1_KFE  ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(1)%kNH4 ', 'QTY_PARAM_AUTOTROPH1_KNH4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(1)%kPO4 ', 'QTY_PARAM_AUTOTROPH1_KPO4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(1)%kSiO3', 'QTY_PARAM_AUTOTROPH1_KSIO3', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(2)%kCO2 ', 'QTY_PARAM_AUTOTROPH2_KCO2 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(2)%kDOP ', 'QTY_PARAM_AUTOTROPH2_KDOP ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(2)%kFe  ', 'QTY_PARAM_AUTOTROPH2_KFE  ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(2)%kNH4 ', 'QTY_PARAM_AUTOTROPH2_KNH4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(2)%kPO4 ', 'QTY_PARAM_AUTOTROPH2_KPO4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(2)%kSiO3', 'QTY_PARAM_AUTOTROPH2_KSIO3', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(3)%kCO2 ', 'QTY_PARAM_AUTOTROPH3_KCO2 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(3)%kDOP ', 'QTY_PARAM_AUTOTROPH3_KDOP ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(3)%kFe  ', 'QTY_PARAM_AUTOTROPH3_KFE  ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(3)%kNH4 ', 'QTY_PARAM_AUTOTROPH3_KNH4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(3)%kPO4 ', 'QTY_PARAM_AUTOTROPH3_KPO4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(3)%kSiO3', 'QTY_PARAM_AUTOTROPH3_KSIO3', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(4)%kCO2 ', 'QTY_PARAM_AUTOTROPH4_KCO2 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(4)%kDOP ', 'QTY_PARAM_AUTOTROPH4_KDOP ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(4)%kFe  ', 'QTY_PARAM_AUTOTROPH4_KFE  ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(4)%kNH4 ', 'QTY_PARAM_AUTOTROPH4_KNH4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(4)%kPO4 ', 'QTY_PARAM_AUTOTROPH4_KPO4 ', '0.0', 'NA', 'UPDATE',
+                           'autotroph_settings(4)%kSiO3', 'QTY_PARAM_AUTOTROPH4_KSIO3', '0.0', 'NA', 'UPDATE'
    /
 
 &utilities_nml
@@ -169,12 +191,12 @@
    /
 
 &preprocess_nml
-   input_obs_def_mod_file  = '/glade/work/rarmstrong/observations/forward_operators/DEFAULT_obs_def_mod.F90'
-   output_obs_def_mod_file = '/glade/work/rarmstrong/observations/forward_operators/obs_def_mod.f90'
-   input_obs_qty_mod_file  = '/glade/work/rarmstrong/assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90'
-   output_obs_qty_mod_file = '/glade/work/rarmstrong/assimilation_code/modules/observations/obs_kind_mod.f90'
-   obs_type_files          = '/glade/work/rarmstrong/observations/forward_operators/obs_def_ocean_mod.f90'
-   quantity_files          = '/glade/work/rarmstrong/assimilation_code/modules/observations/default_quantities_mod.f90'
+   input_obs_def_mod_file  = '/glade/work/rarmstrong/DART/observations/forward_operators/DEFAULT_obs_def_mod.F90'
+   output_obs_def_mod_file = '/glade/work/rarmstrong/DART/observations/forward_operators/obs_def_mod.f90'
+   input_obs_qty_mod_file  = '/glade/work/rarmstrong/DART/assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90'
+   output_obs_qty_mod_file = '/glade/work/rarmstrong/DART/assimilation_code/modules/observations/obs_kind_mod.f90'
+   obs_type_files          = '/glade/work/rarmstrong/DART/observations/forward_operators/obs_def_ocean_mod.f90'
+   quantity_files          = '/glade/work/rarmstrong/DART/assimilation_code/modules/observations/default_quantities_mod.f90', '/glade/work/rarmstrong/DART/assimilation_code/modules/observations/ocean_quantities_mod.f90'
    /
 
 &obs_sequence_tool_nml
