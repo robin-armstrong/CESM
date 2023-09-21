@@ -37,7 +37,7 @@ paramlist = ["autotroph_settings(1)%kCO2",
 numlayers = 65
 
 def getvalue(param_array):
-    return param_array[0]
+    return np.mean(param_array[0])
 
 ################### MAIN PROGRAM ########################
 

@@ -16,7 +16,7 @@ OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 ENS_SIZE=80
 
 # other
-LASTDAY_DART=147977     # last day of simulation (DART calendar)
+LASTDAY_DART=147632     # last day of simulation (DART calendar)
 MOM6_TO_DART=139157     # offset between MOM6 and DART calendars
 MOM6_TIMESTEP=3600.0    # timestep (seconds) to use when advancing ensemble members
 
@@ -47,9 +47,9 @@ if ${START_CLEAN}; then
     echo "configuring the DART namelist file..."
 
     sed -i "32 s%input_state_files = .*%input_state_files = '',%" ${MOM6_BATS_DIR}/DART/input.nml
-    sed -i "33 s%input_state_file_list = .*%input_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_states.txt', ${MOM6_BATS_DIR}/DART/ensemble_params.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "33 s%input_state_file_list = .*%input_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_states.txt', '${MOM6_BATS_DIR}/DART/ensemble_params.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "38 s%output_state_files = .*%output_state_files = '',%" ${MOM6_BATS_DIR}/DART/input.nml
-    sed -i "39 s%output_state_file_list = .*%output_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_states.txt', ${MOM6_BATS_DIR}/DART/ensemble_params.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "39 s%output_state_file_list = .*%output_state_file_list = '${MOM6_BATS_DIR}/DART/ensemble_states.txt', '${MOM6_BATS_DIR}/DART/ensemble_params.txt',%" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "42 s/num_output_state_members = .*/num_output_state_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "47 s/ens_size = .*/ens_size = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "49 s/perturb_from_single_instance = .*/perturb_from_single_instance = .false.,/" ${MOM6_BATS_DIR}/DART/input.nml
@@ -105,12 +105,11 @@ mkdir -p ${TMPDIR}
 
 echo "beginning the assimilation loop..."
 
-exit
-
 while [ $currentday_dart -lt $LASTDAY_DART ]
 do
     echo "archiving the state of member 1..."
-    cp ${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc ${MOM6_BATS_DIR}/output/member_0001_archive/${currentday_dart}.res.nc
+    cp ${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc ${MOM6_BATS_DIR}/output/member_0001_archive/${currentday_dart}.state.nc
+    cp ${MOM6_BATS_DIR}/ensemble/member_0001/INPUT/marbl_params.nc ${MOM6_BATS_DIR}/output/member_0001_archive/${currentday_dart}.params.nc
 
     echo "searching for an obs-sequence file for day ${currentday_mom6} (MOM6 calendar)..."
     echo "                                           ${currentday_dart} (DART calendar)..."
@@ -142,24 +141,47 @@ do
         echo "================================================================"
         echo ""
 
+        echo "adding vertical layers to output inflation files..."
         ncks -A -v h template_priorinf_mean_d01.nc output_priorinf_mean_d01.nc
         ncks -A -v h template_priorinf_sd_d01.nc output_priorinf_sd_d01.nc
 
         cd ${back}
 
+        echo "archiving the assimilation output..."
         mv ${MOM6_BATS_DIR}/DART/dart_log.out ${outputdir}
-        mv ${MOM6_BATS_DIR}/DART/output_mean.nc ${outputdir}
-        mv ${MOM6_BATS_DIR}/DART/output_sd.nc ${outputdir}
+        mv ${MOM6_BATS_DIR}/DART/output_mean* ${outputdir}
+        mv ${MOM6_BATS_DIR}/DART/output_sd* ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/preassim* ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/analysis* ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/input_priorinf* ${outputdir}
         mv ${MOM6_BATS_DIR}/DART/output_priorinf* ${outputdir}
         
+        echo "preparing inflation files for the next assimilation cycle..."
         cp ${outputdir}/output_priorinf_mean_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d01.nc
         cp ${outputdir}/output_priorinf_sd_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_sd_d01.nc
 
         cp ${outputdir}/output_priorinf_mean_d02.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d02.nc
         cp ${outputdir}/output_priorinf_sd_d02.nc ${MOM6_BATS_DIR}/DART/input_priorinf_sd_d02.nc
+
+        echo "transferring parameter changes to MARBL..."
+
+        for i in $(seq ${ENS_SIZE}); do
+            # moving the old parameter file to a temp file that will soon be deleted
+            memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
+            cp ${memberdir}/INPUT/marbl_in ${memberdir}/INPUT/marbl_in_temp
+            rm ${memberdir}/INPUT/marbl_in
+
+            # generating the new parameter file from DART output
+            python3 ${MOM6_BATS_DIR}/dart_to_marbl.py ${memberdir}/INPUT/marbl_params.nc ${memberdir}/INPUT/marbl_in_temp ${memberdir}/INPUT/marbl_in
+            rm ${memberdir}/INPUT/marbl_in_temp
+            rm ${memberdir}/INPUT/marbl_params.nc
+
+            # regenerating the DART parameter file so that it has a correct timestamp,
+            # this also has the effect of equalizing parameter values across different layers
+            # in the resulting NetCDF file. The method of choosing a single parameter from all
+            # the layers is defined in the 'getvalue()' function of dart_to_marbl.py.
+            python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${currentday_mom6} ${memberdir}/INPUT/marbl_params.nc
+        done
     else
         echo "no file found."
     fi

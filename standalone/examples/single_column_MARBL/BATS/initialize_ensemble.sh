@@ -33,9 +33,10 @@ echo "deleting old ensemble members..."
 
 rm -rf ${MOM6_BATS_DIR}/ensemble/member*
 
-echo "deleting old ensemble member list..."
+echo "deleting old ensemble member lists..."
 
 rm ${MOM6_BATS_DIR}/DART/ensemble_members.txt
+rm ${MOM6_BATS_DIR}/DART/ensemble_params.txt
 
 echo "configuring baseline MARBL + MOM6 namelist to read from BATS..."
 
