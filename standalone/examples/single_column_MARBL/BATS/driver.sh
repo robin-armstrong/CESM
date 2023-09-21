@@ -16,13 +16,14 @@ OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 ENS_SIZE=80
 
 # other
-LASTDAY_DART=147632     # last day of simulation (DART calendar)
+LASTDAY_DART=147900     # last day of simulation (DART calendar)
 MOM6_TO_DART=139157     # offset between MOM6 and DART calendars
 MOM6_TIMESTEP=3600.0    # timestep (seconds) to use when advancing ensemble members
 
 # ======================= MAIN PROGRAM =======================
 
 module load nco
+conda activate marbl-dart
 
 echo ""
 echo "================================================================"

@@ -53,8 +53,8 @@
    async                        = 0,
    adv_ens_command              = "./advance_model.csh",
 
-   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/BATS_obsseq/BATS_147613.out',
-   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/output/147613/obs_seq.final',
+   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/BATS_obsseq/BATS_147625.out',
+   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/output/147625/obs_seq.final',
    num_output_obs_members = 80,
    init_time_days               = -1,
    init_time_seconds            = -1,
