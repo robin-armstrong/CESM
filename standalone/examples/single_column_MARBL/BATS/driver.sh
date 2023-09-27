@@ -5,10 +5,9 @@
 # if 'true', then the script will erase old DART outputs and start clean
 START_CLEAN=true
 
-# MOM6 binary, keep this path absolute
+# important paths, keep these absolute
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
-
-# important filesystem paths, keep these absolute
+CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
 OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 
@@ -23,7 +22,7 @@ MOM6_TIMESTEP=3600.0    # timestep (seconds) to use when advancing ensemble memb
 # ======================= MAIN PROGRAM =======================
 
 module load nco
-conda activate marbl-dart
+source ${CONDA_ACTIVATE} marbl-dart
 
 echo ""
 echo "================================================================"

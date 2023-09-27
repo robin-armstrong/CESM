@@ -2,20 +2,32 @@
 
 # ======================= SCRIPT PARAMETERS =======================
 
-# important paths, keep these absolute
+START_CLEAN=true
+FIRST_MEMBER_INDEX=1
+
+# Important paths, keep these absolute.
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
 MOM6_BATS_DIR=$(pwd)
+CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 
-# ensemble size
-ENS_SIZE=80
+# Ensemble size.
+ENS_SIZE=3
 
-SAMPLES_PER_YEAR=5      # the number of ensemble members that will be sampled from each year
-DAYS_BETWEEN_SAMPLES=10 # the days between sampling ensemble members in a given year
-
-# the day when the assimilation loop will start (MOM6 calendar)
+# Day when the assimilation loop will start (MOM6 calendar).
 FIRSTDAY_MOM6=8455
 
-# random number seed for creating the initial perturbations
+# Length, in years, of the spin-up for each ensemble member.
+SPINUP_LENGTH=50
+
+# Length, in days, of yearly time interval where state samples are taken.
+# Yearly averages of these samples are recorded to serve as a diagnostic for
+# whether or not the spin-up reached steady state.
+SAMPLES_PER_YEAR=20
+
+# BGC variable that the yearly averages are computed for.
+BGC_VAR=O2
+
+# Random number seed for creating the parameter perturbations.
 SEED=1
 
 # ======================= MAIN PROGRAM =======================
@@ -26,33 +38,59 @@ echo "===================== INITIALIZATION DRIVER ===================="
 echo "================================================================"
 echo ""
 
+source ${CONDA_ACTIVATE} marbl-dart
+
 let n=365*$((${FIRSTDAY_MOM6}/365))
-let first_sample_day=${FIRSTDAY_MOM6}-$n
+let first_sample_day=${FIRSTDAY_MOM6}-${n}
 
-echo "deleting old ensemble members..."
+if ${START_CLEAN}; then
+    echo "deleting old ensemble members..."
 
-rm -rf ${MOM6_BATS_DIR}/ensemble/member*
+    rm -rf ${MOM6_BATS_DIR}/ensemble/member*
 
-echo "deleting old ensemble member lists..."
+    echo "deleting old ensemble member lists..."
 
-rm ${MOM6_BATS_DIR}/DART/ensemble_members.txt
-rm ${MOM6_BATS_DIR}/DART/ensemble_params.txt
+    rm -f ${MOM6_BATS_DIR}/DART/ensemble_states.txt
+    rm -f ${MOM6_BATS_DIR}/DART/ensemble_params.txt
+fi
 
-echo "configuring baseline MARBL + MOM6 namelist to read from BATS..."
+let member_index=${FIRST_MEMBER_INDEX}-1
 
-sed -i "3 s/input_filename = .*/input_filename = 'n',/" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
-sed -i "4 s%restart_input_dir = .*%restart_input_dir = 'INPUT/',%" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
-
-num_members_created=0
-first_integration_complete=false
-
-while [ ${num_members_created} -lt ${ENS_SIZE} ]
+while [ ${member_index} -lt ${ENS_SIZE} ]
 do
-    echo "advancing the model to day ${first_sample_day}..."
+    let member_index=${member_index}+1
 
-    sed -i "371 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
+    echo "creating directory for member ${member_index}..."
+    
+    memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${member_index})
+    rm -rf ${memberdir}
+    sed -i "\:${memberdir}/RESTART/MOM.res.nc:d" ${MOM6_BATS_DIR}/DART/ensemble_states.txt
+    sed -i "\:${memberdir}/INPUT/marbl_params.nc:d" ${MOM6_BATS_DIR}/DART/ensemble_params.txt
+
+    mkdir ${memberdir}
+    cp -Lr ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
+
+    echo "perturbing the BGC parameters for member ${member_index}..."
+
+    cp ${memberdir}/INPUT/marbl_in ${memberdir}/INPUT/marbl_in_temp
+    rm ${memberdir}/INPUT/marbl_in
+    let randomseed=${SEED}+${member_index}
+    python3 ${MOM6_BATS_DIR}/perturb_params.py ${memberdir}/INPUT/marbl_in_temp ${randomseed} ${memberdir}/INPUT/marbl_in
+    rm ${memberdir}/INPUT/marbl_in_temp
+
+    echo "creating parameter netCDF file for member ${member_index}..."
+    python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${FIRSTDAY_MOM6} ${memberdir}/INPUT/marbl_params.nc
+
+    echo "adding member ${member_index} to the ensemble list..."
+
+    echo "${memberdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_states.txt
+    echo ${memberdir}/INPUT/marbl_params.nc >> ${MOM6_BATS_DIR}/DART/ensemble_params.txt
+
+    echo "advancing ensemble member ${member_index} to day ${first_sample_day}..."
+
+    sed -i "371 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${memberdir}/MOM_input
     back=$(pwd)
-    cd ${MOM6_BATS_DIR}/ensemble/baseline
+    cd ${memberdir}
 
     echo ""
     echo "================================================================"
@@ -69,50 +107,62 @@ do
     echo ""
 
     cd ${back}
-    echo "finished advancing the model."
 
-    if ! ${first_integration_complete} 
-    then
-        first_integration_complete=true
+    echo "finished advancing member ${member_index}."
+    echo "configuring member ${member_index} namelist to read from restart file..."
 
-        echo "configuring baseline MARBL + MOM6 namelist to read from restart file..."
+    sed -i "3 s/input_filename = .*/input_filename = 'r',/" ${memberdir}/input.nml
+    sed -i "4 s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${memberdir}/input.nml
 
-        sed -i "3 s/input_filename = .*/input_filename = 'r',/" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
-        sed -i "4 s%restart_input_dir = .*%restart_input_dir = 'RESTART/',%" ${MOM6_BATS_DIR}/ensemble/baseline/input.nml
-    fi
-
-    echo "sampling ${SAMPLES_PER_YEAR} ensemble members over the next ${SAMPLES_PER_YEAR} days..."
-
+    spinup_time=0
     currentday=${first_sample_day}
 
-    for i in $(seq ${SAMPLES_PER_YEAR})
+    while [ ${spinup_time} -lt ${SPINUP_LENGTH} ]
     do
-        let num_members_created=${num_members_created}+1
-        echo "sampling member ${num_members_created} from day ${currentday}..."
+        let spinup_time=${spinup_time=0}+1
+        echo "taking samples over the next ${SAMPLES_PER_YEAR} days..."
 
-        memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${num_members_created})
-        mkdir ${memberdir}
-        cp -Lr ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
-        rm ${memberdir}/RESTART/ocean_solo.res
+        currentday=${first_sample_day}
 
-        echo "correcting the timestamp for member ${num_members_created}..."
+        for sample_num in $(seq ${SAMPLES_PER_YEAR})
+        do
+            echo "taking sample on day ${currentday}..."
+            python3 ${MOM6_BATS_DIR}/record_spinup.py ${BGC_VAR} ${spinup_time} ${sample_num} ${memberdir}/RESTART/MOM.res.nc ${memberdir}/spinup_record.nc
 
-        ncdump ${memberdir}/RESTART/MOM.res.nc >> MOM.res.txt        
-        rm ${memberdir}/RESTART/MOM.res.nc        
-        sed -ri "s/Time = [0123456789]+ ;/Time = ${FIRSTDAY_MOM6} ;/" MOM.res.txt
-        ncgen MOM.res.txt -o ${memberdir}/RESTART/MOM.res.nc
-        rm MOM.res.txt
+            let currentday=${currentday}+1
+            echo "advancing member ${member_index} to day ${currentday}..."
 
-        echo "adding member ${num_members_created} to the ensemble list..."
-        echo "${memberdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_states.txt
-        
-        let currentday=${currentday}+${DAYS_BETWEEN_SAMPLES}
-        sed -i "371 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
+            sed -i "371 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${memberdir}/MOM_input
+            back=$(pwd)
+            cd ${memberdir}
 
-        echo "advancing the model to day ${currentday}..."
+            echo ""
+            echo "================================================================"
+            echo "========================= MARBL + MOM6 ========================="
+            echo "================================================================"
+            echo ""
 
+            ${MOM6_BIN}
+
+            echo ""
+            echo "================================================================"
+            echo "===================== INITIALIZATION DRIVER ===================="
+            echo "================================================================"
+            echo ""
+
+            cd ${back}
+
+            echo "finished advancing member ${member_index}."
+        done
+
+        let first_sample_day=${first_sample_day}+365
+        let currentday=${first_sample_day}
+
+        echo "advancing member ${member_index} to day ${currentday}..."
+
+        sed -i "371 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${memberdir}/MOM_input
         back=$(pwd)
-        cd ${MOM6_BATS_DIR}/ensemble/baseline
+        cd ${memberdir}
 
         echo ""
         echo "================================================================"
@@ -129,26 +179,17 @@ do
         echo ""
 
         cd ${back}
-        echo "finished advancing the model."
+
+        echo "finished advancing member ${member_index}."
     done
 
-    let first_sample_day=${first_sample_day}+365
-done
+    echo "correcting the timestamp for member ${member_index}..."
 
-echo "perturbing the BGC parameters..."
-
-for i in $(seq ${ENS_SIZE}); do
-    memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/INPUT
-    
-    cp ${memberdir}/marbl_in ${memberdir}/marbl_in_temp
-    rm ${memberdir}/marbl_in
-    
-    let newseed=${SEED}+${i}
-    python3 ${MOM6_BATS_DIR}/perturb_params.py ${memberdir}/marbl_in_temp ${newseed} ${memberdir}/marbl_in
-    rm ${memberdir}/marbl_in_temp
-
-    python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/marbl_in ${FIRSTDAY_MOM6} ${memberdir}/marbl_params.nc
-    echo ${memberdir}/marbl_params.nc >> ${MOM6_BATS_DIR}/DART/ensemble_params.txt
+    ncdump ${memberdir}/RESTART/MOM.res.nc >> MOM.res.txt        
+    rm ${memberdir}/RESTART/MOM.res.nc        
+    sed -ri "s/Time = [0123456789]+ ;/Time = ${FIRSTDAY_MOM6} ;/" MOM.res.txt
+    ncgen MOM.res.txt -o ${memberdir}/RESTART/MOM.res.nc
+    rm MOM.res.txt
 done
 
 echo "finished initializing the ensemble."
