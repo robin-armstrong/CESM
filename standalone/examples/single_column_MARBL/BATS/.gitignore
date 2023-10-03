@@ -1,6 +1,6 @@
 submit_driver.sh
 driver_logfile.txt
-submit_initialization.sh
+submit_initializer.sh
 initialization_logfile.txt
 output/*
 output_backup/*
