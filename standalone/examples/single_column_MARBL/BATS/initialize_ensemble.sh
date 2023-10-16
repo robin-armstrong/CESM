@@ -3,7 +3,7 @@
 # ======================= SCRIPT PARAMETERS =======================
 
 # important paths, keep these absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel/MOM6/MOM6
 MOM6_BATS_DIR=$(pwd)
 
 # ensemble size
