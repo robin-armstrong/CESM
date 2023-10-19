@@ -128,13 +128,14 @@
    /
 
 &obs_kind_nml
-   assimilate_these_obs_types = 'POLY_ELECTRODE_OXYGEN',
-                                'TITRATION_ALKALINITY',
-                                'CATALYTIC_CARBON',
-                                'UV_OXY_NITROGEN',
-				                    'CFA_SILICATE',
-				                    'CFA_PHOSPHATE',
-   evaluate_these_obs_types   = 'CFA_NITRATE'
+   assimilate_these_obs_types = 'BATS_OXYGEN',
+                                'BATS_ALKALINITY',
+                                'BATS_INORGANIC_CARBON',
+				                    'BATS_SILICATE',
+				                    'BATS_PHOSPHATE',
+                                'BATS_NITRATE'
+   evaluate_these_obs_types   = 'BATS_ORGANIC_CARBON',
+                                'BATS_NITROGEN'
    /
 
 &model_nml
