@@ -39,8 +39,8 @@ if [ ${process_id} -eq 1 ]; then
     if ${START_CLEAN}; then
         echo "backing up the initial ensemble..."
 
-        rm -rf ${MOM6_BATS_DIR}/ensemble_backup
-        cp -r ${MOM6_BATS_DIR}/ensemble ensemble_backup
+        rm -rf ${MOM6_BATS_DIR}/ensemble_backup/temp
+        cp -r ${MOM6_BATS_DIR}/ensemble ensemble_backup/temp
 
         echo "deleting old DART output files..."
 
