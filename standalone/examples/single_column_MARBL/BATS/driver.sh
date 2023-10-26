@@ -6,13 +6,13 @@
 START_CLEAN=true
 
 # important paths, keep these absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
 OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 
 # ensemble size
-ENS_SIZE=3
+ENS_SIZE=2
 
 # other
 LASTDAY_DART=147900     # last day of simulation (DART calendar)
@@ -25,7 +25,6 @@ process_id=${1}
 module load nco
 source ${CONDA_ACTIVATE} marbl-dart
 
-# process no. 1 performs file organization tasks
 if [ ${process_id} -eq 1 ]; then
     echo ""
     echo "================================================================"
@@ -33,11 +32,28 @@ if [ ${process_id} -eq 1 ]; then
     echo "================================================================"
     echo ""
 
-    if ${START_CLEAN}; then
+    echo "determining the initial model time..."
+fi
+
+timestr=$(ncdump ${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc | grep "Time = [0123456789]* ;")
+timestr_length=${#timestr}
+let timestr_lastindex=${timestr_length}-2
+let timestamp_length=${timestr_lastindex}-8
+currentday_mom6=${timestr:8:${timestamp_length}}
+let currentday_dart=${currentday_mom6}+${MOM6_TO_DART}
+
+if [ ${process_id} -eq 1 ]; then
+    echo "determined the initial model time to be ${currentday_mom6} (MOM6 calendar),"
+    echo "                                        ${currentday_dart} (DART calendar)."
+fi
+
+# process no. 1 performs file organization tasks
+if [ ${process_id} -eq 1 ]; then
+    if ${START_CLEAN}; then`
         echo "backing up the initial ensemble..."
 
-        rm -rf ${MOM6_BATS_DIR}/ensemble_backup_temp
-        cp -r ${MOM6_BATS_DIR}/ensemble ensemble_backup_temp
+        rm -rf ${MOM6_BATS_DIR}/ensemble_backup/temp
+        cp -r ${MOM6_BATS_DIR}/ensemble ensemble_backup/temp
 
         echo "deleting old DART output files..."
 
@@ -89,18 +105,6 @@ if [ ${process_id} -eq 1 ]; then
     for i in $(seq ${ENS_SIZE}); do
         sed -i "34 s/DT = .*/DT = ${MOM6_TIMESTEP}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
     done
-
-    echo "determining the initial model time..."
-
-    timestr=$(ncdump ${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc | grep "Time = [0123456789]* ;")
-    timestr_length=${#timestr}
-    let timestr_lastindex=${timestr_length}-2
-    let timestamp_length=${timestr_lastindex}-8
-    currentday_mom6=${timestr:8:${timestamp_length}}
-    let currentday_dart=${currentday_mom6}+${MOM6_TO_DART}
-
-    echo "determined the initial model time to be ${currentday_mom6} (MOM6 calendar),"
-    echo "                                        ${currentday_dart} (DART calendar)."
 
     echo "preparing temp directory..."
     export TMPDIR=/glade/scratch/${USER}/marbl_mom6_dart_temp
@@ -239,6 +243,9 @@ do
     cd ${back}
     touch ${MOM6_BATS_DIR}/.mom6_complete_$(printf "%04d" ${process_id})
 
+    let currentday_mom6=${currentday_mom6}+1
+    let currentday_dart=${currentday_dart}+1
+
     # process no. 1 prepares for the next assimilation cycle
     if [ ${process_id} -eq 1 ]; then
         # waiting for all the MOM6 instances to finish before proceeding
@@ -267,9 +274,6 @@ do
         let diff=${current_seconds}-${init_seconds}
 
         echo "integration wall-time: ${diff} seconds."
-
-        currentday_mom6=${tomorrow_mom6}
-        currentday_dart=${tomorrow_dart}
 
         if [ ${currentday_dart} -eq ${LASTDAY_DART} ]; then
             touch ${MOM6_BATS_DIR}/.stop_cycle

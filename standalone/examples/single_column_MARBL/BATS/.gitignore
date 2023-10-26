@@ -1,11 +1,12 @@
 submit_driver.sh
 driver_logfile.txt
-submit_initialization.sh
+submit_initializer.sh
 initialization_logfile.txt
 output/*
 output_backup/*
 ensemble/member*
 ensemble_backup
+small_ensemble_backup
 DART/ensemble_members.txt
 marblmom6_dart_1d.e*
 marblmom6_dart_1d.o*

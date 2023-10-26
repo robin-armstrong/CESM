@@ -8,7 +8,7 @@ MOM6_BATS_DIR=$(pwd)
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 
 # Ensemble size.
-ENS_SIZE=3 #80
+ENS_SIZE=2 #80
 
 # Day when the assimilation loop will start (MOM6 calendar).
 FIRSTDAY_MOM6=8455

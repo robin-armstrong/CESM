@@ -1,6 +1,6 @@
-if [ -d "ensemble_backup" ]; then
-	rm -rf ensemble; cp -r ensemble_backup ensemble
+if [ -d "ensemble_backup/temp" ]; then
+	rm -rf ensemble; cp -r ensemble_backup/temp ensemble; rm -f ensemble/README.txt
 else
-	echo "ERROR: directory 'ensemble_backup' must exist."
+	echo "ERROR: directory 'ensemble_backup/temp' must exist."
 fi
 
