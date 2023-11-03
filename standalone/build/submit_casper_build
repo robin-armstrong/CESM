@@ -4,7 +4,7 @@
 #PBS -N standalone_build_casper
 
 ### Project code
-#PBS -A P93300070
+#PBS -A P93300012
 #PBS -l walltime=00:30:00
 #PBS -q casper
 
@@ -19,4 +19,4 @@
 #PBS -m abe
 
 ### Run the executable
-./build_examples-cheyenne.sh intel-casper
+./build_examples-cheyenne.sh intel-casper >> build_log.txt

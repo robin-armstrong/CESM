@@ -6,7 +6,7 @@
 START_CLEAN=true
 
 # MOM6 binary, keep this path absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 
 # important filesystem paths, keep these absolute
 MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
