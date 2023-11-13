@@ -1,6 +1,5 @@
-if [ -d "ensemble_backup/temp" ]; then
-	rm -rf ensemble; cp -r ensemble_backup/temp ensemble; rm -f ensemble/README.txt
+if [ -d "/glade/u/home/rarmstrong/marbldart_ensemble_backup/temp" ]; then
+	rm -rf ensemble; cp -r /glade/u/home/rarmstrong/marbldart_ensemble_backup/temp ensemble; rm -f ensemble/README.txt
 else
-	echo "ERROR: directory 'ensemble_backup/temp' must exist."
+	echo "ERROR: directory '/glade/u/home/rarmstrong/marbldart_ensemble_backup/temp' must exist."
 fi
-

@@ -36,7 +36,7 @@ for line in marbl_in.readlines():
             pval         = float(pval_array[0])
 
             # applying a log-normal multiplicative perturbation
-            pval *= np.exp(.1*np.random.randn())
+            pval *= np.exp(.3*np.random.randn())
             marbl_out.write(pname + " = " + str(pval) + "\n")
     
     if(not in_paramlist):

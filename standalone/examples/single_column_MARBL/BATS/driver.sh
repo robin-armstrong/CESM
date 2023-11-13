@@ -6,13 +6,13 @@
 START_CLEAN=true
 
 # important paths, keep these absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-cheyenne/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
 OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
 
 # ensemble size
-ENS_SIZE=2
+ENS_SIZE=80
 
 # other
 LASTDAY_DART=147900     # last day of simulation (DART calendar)
@@ -49,7 +49,7 @@ fi
 
 # process no. 1 performs file organization tasks
 if [ ${process_id} -eq 1 ]; then
-    if ${START_CLEAN}; then`
+    if ${START_CLEAN}; then
         echo "backing up the initial ensemble..."
 
         rm -rf ${MOM6_BATS_DIR}/ensemble_backup/temp

@@ -3,18 +3,18 @@
 # ======================= SCRIPT PARAMETERS =======================
 
 # Important paths, keep these absolute.
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 MOM6_BATS_DIR=$(pwd)
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 
 # Ensemble size.
-ENS_SIZE=2 #80
+ENS_SIZE=80
 
 # Day when the assimilation loop will start (MOM6 calendar).
 FIRSTDAY_MOM6=8455
 
 # Length, in years, of the spin-up for each ensemble member.
-SPINUP_LENGTH=5 #100
+SPINUP_LENGTH=5
 
 # Length, in days, of yearly time interval where state samples are taken.
 # Yearly averages of these samples are recorded to serve as a diagnostic for
