@@ -7,14 +7,14 @@ import netCDF4 as nc
 
 paramlist = ["autotroph_settings(1)%kDOP",
              "autotroph_settings(1)%kNH4"]
-ens_size  = 80
 ens_path  = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble"
 
 ################### MAIN PROGRAM ########################
 
 mode     = sys.argv[1]
-filename = sys.argv[2]
-day      = sys.argv[3]
+ens_size = round(float(sys.argv[2]))
+filename = sys.argv[3]
+day      = sys.argv[4]
 
 record   = nc.Dataset(filename, "a")
 

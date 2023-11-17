@@ -1,5 +1,7 @@
-if [ -d "/glade/u/home/rarmstrong/marbldart_ensemble_backup/temp" ]; then
-	rm -rf ensemble; cp -r /glade/u/home/rarmstrong/marbldart_ensemble_backup/temp ensemble; rm -f ensemble/README.txt
+ENS_BACKUP_DIR=/glade/u/home/rarmstrong/marbldart_ensemble_backup
+
+if [ -d "${ENS_BACKUP_DIR}/temp" ]; then
+	rm -rf ensemble; cp -r ${ENS_BACKUP_DIR}/temp ensemble; rm -f ensemble/README.txt
 else
-	echo "ERROR: directory '/glade/u/home/rarmstrong/marbldart_ensemble_backup/temp' must exist."
+	echo "ERROR: directory '${ENS_BACKUP_DIR}/temp' must exist."
 fi

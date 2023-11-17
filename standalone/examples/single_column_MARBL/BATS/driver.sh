@@ -6,10 +6,11 @@
 START_CLEAN=true
 
 # important paths, keep these absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
+MOM6_BIN=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
-MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
-OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
+MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS
+OBSSEQ_DIR=/glade/work/rarmstrong/BATS_obsseq
+ENS_BACKUP_DIR=/glade/u/home/rarmstrong/marbldart_ensemble_backup
 
 # ensemble size
 ENS_SIZE=80
@@ -52,16 +53,21 @@ if [ ${process_id} -eq 1 ]; then
     if ${START_CLEAN}; then
         echo "backing up the initial ensemble..."
 
-        rm -rf ${MOM6_BATS_DIR}/ensemble_backup/temp
-        cp -r ${MOM6_BATS_DIR}/ensemble ensemble_backup/temp
+        rm -rf ${ENS_BACKUP_DIR}/temp
+        cp -r ${MOM6_BATS_DIR}/ensemble ${ENS_BACKUP_DIR}/temp
 
         echo "deleting old DART output files..."
 
         rm -rf ${MOM6_BATS_DIR}/output/*
         mkdir ${MOM6_BATS_DIR}/output/member_0001_archive
+        mkdir ${MOM6_BATS_DIR}/output/parameter_record
         rm -f ${MOM6_BATS_DIR}/DART/template_priorinf*
         rm -f ${MOM6_BATS_DIR}/DART/input_priorinf*
         rm -f ${MOM6_BATS_DIR}/DART/output_priorinf*
+
+        echo "initiating record of ensemble parameter statistics..."
+
+        python3 ${MOM6_BATS_DIR}/record_params.py "init" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 0
 
         echo "configuring the DART namelist file..."
 
@@ -170,6 +176,10 @@ do
             mv ${MOM6_BATS_DIR}/DART/analysis* ${outputdir}
             mv ${MOM6_BATS_DIR}/DART/input_priorinf* ${outputdir}
             mv ${MOM6_BATS_DIR}/DART/output_priorinf* ${outputdir}
+
+            echo "recording the current parameter statistics..."
+
+            python3 ${MOM6_BATS_DIR}/record_params.py "record" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc ${currentday_dart}
             
             echo "preparing inflation files for the next assimilation cycle..."
             cp ${outputdir}/output_priorinf_mean_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d01.nc
