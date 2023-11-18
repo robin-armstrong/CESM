@@ -34,7 +34,7 @@ if [ ${process_id} -eq 1 ]; then
     echo "================================================================"
     echo ""
     
-    rm -f ${MOM6_BATS_DIR}./stop_cycle
+    rm -f ${MOM6_BATS_DIR}/.stop_cycle
 
     if ${START_CLEAN}; then
         echo "backing up the initial ensemble..."
@@ -184,7 +184,7 @@ do
         echo ""
 
         for i in $(seq ${ENS_SIZE}); do
-            sed -i "371 s/DAYMAX = .*/DAYMAX = ${tomorrow_mom6}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
+            sed -i "380 s/DAYMAX = .*/DAYMAX = ${tomorrow_mom6}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
         done
 
         echo "advancing the ensemble..."

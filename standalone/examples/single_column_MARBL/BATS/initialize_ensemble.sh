@@ -3,7 +3,7 @@
 # ======================= SCRIPT PARAMETERS =======================
 
 # important paths, keep these absolute
-MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel/MOM6/MOM6
+MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 MOM6_BATS_DIR=$(pwd)
 
 # ensemble size
@@ -46,7 +46,7 @@ while [ ${num_members_created} -lt ${ENS_SIZE} ]
 do
     echo "advancing the model to day ${first_sample_day}..."
 
-    sed -i "371 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
+    sed -i "380 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
     back=$(pwd)
     cd ${MOM6_BATS_DIR}/ensemble/baseline
 
@@ -103,7 +103,7 @@ do
         echo "${memberdir}/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_members.txt
         
         let currentday=${currentday}+${DAYS_BETWEEN_SAMPLES}
-        sed -i "371 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
+        sed -i "380 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
 
         echo "advancing the model to day ${currentday}..."
 
