@@ -408,3 +408,5 @@ V_TRUNC_FILE = "V_velocity_truncations" ! default = ""
                                 ! The absolute path to a file into which the accelerations leading to meridional
                                 ! velocity truncations are written. Undefine this for efficiency if this
                                 ! diagnostic is not needed.
+
+RESTART_CHECKSUMS_REQUIRED = False ! added so that MOM won't crash on restart files provided by DART
