@@ -12,5 +12,5 @@ marblmom6_dart_1d.o*
 marbldart_statedemo*
 clean
 DART/obs_diag_files/*
-
+.stop_cycle
 explain_the_date_to_me
