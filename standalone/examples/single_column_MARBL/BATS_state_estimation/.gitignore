@@ -1,0 +1,17 @@
+submit_driver.sh
+driver_logfile.txt
+submit_initializer.sh
+initialization_logfile.txt
+output/*
+ensemble/member*
+ensemble/README.txt
+DART/ensemble_members.txt
+marbldart_statedemo.e*
+marbldart_statedemo.o*
+marbldart_state_init.e*
+marbldart_state_init.o*
+clean
+reset_ensemble
+DART/dart_log.out
+DART/*.txt
+DART/*.nc
