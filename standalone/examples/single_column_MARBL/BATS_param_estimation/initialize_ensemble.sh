@@ -4,7 +4,7 @@
 
 # Important paths, keep these absolute.
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
-MOM6_BATS_DIR=$(pwd -P)
+MOM6_BATS_DIR=$(pwd)
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 
 # Ensemble size.
@@ -75,7 +75,7 @@ echo "beginning ${spinup_length}-year spinup for member ${member_index}..."
 echo "advancing member ${member_index} to day ${first_sample_day}..."
 
 sed -i "380 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${memberdir}/MOM_input
-back=$(pwd -P)
+back=$(pwd)
 cd ${memberdir}
 
 echo ""
@@ -119,7 +119,7 @@ do
         echo "advancing member ${member_index} to day ${currentday}..."
 
         sed -i "380 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${memberdir}/MOM_input
-        back=$(pwd -P)
+        back=$(pwd)
         cd ${memberdir}
 
         echo ""
@@ -147,7 +147,7 @@ do
     echo "advancing member ${member_index} to day ${currentday}..."
 
     sed -i "380 s/DAYMAX = .*/DAYMAX = ${currentday}/" ${memberdir}/MOM_input
-    back=$(pwd -P)
+    back=$(pwd)
     cd ${memberdir}
 
     echo ""

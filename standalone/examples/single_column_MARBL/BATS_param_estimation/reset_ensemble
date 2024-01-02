@@ -1,0 +1,7 @@
+RESET_DIR=/glade/u/home/rarmstrong/marbldart_ensemble_backup/temp
+
+if [ -d ${RESET_DIR} ]; then
+	rm -rf ensemble; cp -r ${RESET_DIR} ensemble
+else
+	echo "ERROR: directory ${RESET_DIR} must exist."
+fi

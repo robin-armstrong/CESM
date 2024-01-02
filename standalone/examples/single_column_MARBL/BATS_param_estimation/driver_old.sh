@@ -8,8 +8,8 @@ START_CLEAN=true
 # important paths, keep these absolute
 MOM6_BIN=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
-MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation
-OBSSEQ_DIR=~/work/DART/observations/obs_converters/BATS/obs_seq_files
+MOM6_BATS_DIR=$(pwd)
+OBSSEQ_DIR=/glade/work/rarmstrong/BATS_obsseq
 ENS_BACKUP_DIR=/glade/u/home/rarmstrong/marbldart_ensemble_backup
 
 # ensemble size
@@ -51,6 +51,11 @@ fi
 # process no. 1 performs file organization tasks
 if [ ${process_id} -eq 1 ]; then
     if ${START_CLEAN}; then
+        echo "backing up the initial ensemble..."
+
+        rm -rf ${ENS_BACKUP_DIR}/temp
+        cp -r ${MOM6_BATS_DIR}/ensemble ${ENS_BACKUP_DIR}/temp
+
         echo "deleting old DART output files..."
 
         rm -rf ${MOM6_BATS_DIR}/output/*
@@ -78,7 +83,7 @@ if [ ${process_id} -eq 1 ]; then
 
         echo "generating inflation restart files..."
 
-        back=$(pwd -P -P)
+        back=$(pwd)
         cd ${MOM6_BATS_DIR}/DART
 
         echo ""
@@ -116,6 +121,11 @@ fi
 
 while true
 do
+    # checking for an "exit" signal from process no. 1
+    if [ -f "${MOM6_BATS_DIR}/.stop_cycle" ]; then
+        exit
+    fi
+    
     # process no. 1 performs data assimilation and file organization
     if [ ${process_id} -eq 1 ]; then
         echo "archiving the state of member 1..."
@@ -135,7 +145,7 @@ do
             sed -i "56 s%obs_sequence_in_name.*%obs_sequence_in_name ='\\${OBSSEQ_DIR}/BATS_${currentday_dart}.out',%" ${MOM6_BATS_DIR}/DART/input.nml
             sed -i "57 s%obs_sequence_out_name.*%obs_sequence_out_name ='\\${outputdir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
 
-            back=$(pwd -P)
+            back=$(pwd)
             cd ${MOM6_BATS_DIR}/DART
 
             echo ""
@@ -212,12 +222,6 @@ do
             rm ${MOM6_BATS_DIR}/.begin_mom6_$(printf "%04d" ${process_id})
             break
         fi
-
-        # checking for an "exit" signal from process no. 1
-        if [ -f "${MOM6_BATS_DIR}/.stop_cycle_$(printf "%04d" ${process_id})" ]; then
-            rm ${MOM6_BATS_DIR}/.stop_cycle_$(printf "%04d" ${process_id})
-            exit
-        fi
     done
 
     # if necessary, refreshing MARBL parameters before running MOM6
@@ -241,7 +245,7 @@ do
         python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${currentday_mom6} ${memberdir}/INPUT/marbl_params.nc
     fi
 
-    back=$(pwd -P)
+    back=$(pwd)
     cd ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${process_id})
     mom6_log=mom6_logfile_${process_id}.txt
     rm -f ${mom6_log}
@@ -282,15 +286,8 @@ do
         echo "integration wall-time: ${diff} seconds."
 
         if [ ${currentday_dart} -eq ${LASTDAY_DART} ]; then
+            touch ${MOM6_BATS_DIR}/.stop_cycle
             echo "assimilation loop complete."
-            echo "sending exit signal to ensemble members..."
-
-            for i in $(seq ${ENS_SIZE}); do
-                touch ${MOM6_BATS_DIR}/.stop_cycle_$(printf "%04d" ${i})
-            done
-
-            rm ${MOM6_BATS_DIR}/.stop_cycle_0001
-
             echo "exiting..."
             echo ""
 
@@ -298,3 +295,7 @@ do
         fi
     fi
 done
+
+echo "assimilation loop complete."
+echo "exiting..."
+echo ""

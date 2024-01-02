@@ -53,7 +53,7 @@
    async                        = 0,
    adv_ens_command              = "./advance_model.csh",
 
-   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/BATS_obsseq/BATS_149468.out',
+   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files/BATS_149468.out',
    obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_state_estimation/output/149468/obs_seq.final',
    num_output_obs_members = 80,
    init_time_days               = -1,
@@ -128,13 +128,14 @@
    /
 
 &obs_kind_nml
-   assimilate_these_obs_types = 'BATS_OXYGEN',
+   assimilate_these_obs_types = ''
+   evaluate_these_obs_types   = 'BATS_OXYGEN',
                                 'BATS_ALKALINITY',
                                 'BATS_INORGANIC_CARBON',
 				                    'BATS_SILICATE',
 				                    'BATS_PHOSPHATE',
                                 'BATS_NITRATE',
-   evaluate_these_obs_types   = 'BATS_ORGANIC_CARBON',
+                                'BATS_ORGANIC_CARBON',
                                 'BATS_NITROGEN'
    /
 
@@ -189,7 +190,7 @@
    obs_sequence_name     = ''
    obs_sequence_list     = 'obs_seq_list.txt'
    first_bin_center      =  2005, 2, 24, 0, 0, 0
-   last_bin_center       =  2006, 2, 22, 0, 0, 0
+   last_bin_center       =  2010, 2, 22, 0, 0, 0
    bin_separation        =     0, 0, 1, 0, 0, 0
    bin_width             =     0, 0, 1, 0, 0, 0
    time_to_skip          =     0, 0, 0, 0, 0, 0

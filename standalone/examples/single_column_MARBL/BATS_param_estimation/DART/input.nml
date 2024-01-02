@@ -1,11 +1,11 @@
 &perfect_model_obs_nml
    read_input_state_from_file = .true.,
    single_file_in             = .false.,
-   input_state_files          = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/RESTART/DART_perfect_model_obs/MOM.res.nc",
+   input_state_files          = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/RESTART/DART_perfect_model_obs/MOM.res.nc",
 
    write_output_state_to_file = .true.,
    single_file_out            = .false.,
-   output_state_files         = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/RESTART/DART_perfect_model_obs/MOM.res.output.nc",
+   output_state_files         = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/RESTART/DART_perfect_model_obs/MOM.res.output.nc",
    output_interval            = 1,
 
    async                      = 0,
@@ -30,13 +30,13 @@
 &filter_nml
    single_file_in               = .false.,
    input_state_files = '',
-   input_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/DART/ensemble_states.txt', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/DART/ensemble_params.txt',
+   input_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/DART/ensemble_states.txt', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/DART/ensemble_params.txt',
 
    stages_to_write  = 'preassim', 'analysis', 'output',
 
    single_file_out              = .false.,
    output_state_files = '',
-   output_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/DART/ensemble_states.txt', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/DART/ensemble_params.txt',
+   output_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/DART/ensemble_states.txt', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/DART/ensemble_params.txt',
    output_interval              = 1,
    output_members               = .true.,
    num_output_state_members = 80,
@@ -53,8 +53,8 @@
    async                        = 0,
    adv_ens_command              = "./advance_model.csh",
 
-   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files/BATS_149468.out',
-   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/output/149468/obs_seq.final',
+   obs_sequence_in_name ='/glade/work/rarmstrong/BATS_obsseq/BATS_147638.out',
+   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/output/147638/obs_seq.final',
    num_output_obs_members = 80,
    init_time_days               = -1,
    init_time_seconds            = -1,
@@ -90,7 +90,7 @@
    post_inf_mean     = 1.00,
    post_inf_sd       = 0.6,
 
-   input_state_files = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/ensemble/member_0001/INPUT/marbl_params.nc',
+   input_state_files = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/INPUT/marbl_params.nc',
    single_file       = .false.,
    verbose           = .false.
    /
@@ -128,19 +128,18 @@
    /
 
 &obs_kind_nml
-   assimilate_these_obs_types = ''
-   evaluate_these_obs_types   = 'BATS_OXYGEN',
-                                'BATS_ALKALINITY',
-                                'BATS_INORGANIC_CARBON',
-				                    'BATS_SILICATE',
-				                    'BATS_PHOSPHATE',
-                                'BATS_NITRATE',
-                                'BATS_ORGANIC_CARBON',
-                                'BATS_NITROGEN'
+   evaluate_these_obs_types = 'BATS_OXYGEN',
+                              'BATS_ALKALINITY',
+                              'BATS_INORGANIC_CARBON',
+				                  'BATS_SILICATE',
+				                  'BATS_PHOSPHATE',
+                              'BATS_NITRATE',
+                              'BATS_NITROGEN',
+				                  'BATS_ORGANIC_CARBON'
    /
 
 &model_nml
-   template_file         = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/ensemble/member_0001/INPUT/marbl_params.nc',
+   template_file         = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/INPUT/marbl_params.nc',
    time_step_days        = 1,
    time_step_seconds     = 0,
    model_state_variables = 'NO3      ', 'QTY_NITRATE_CONCENTRATION     ', '0.0', 'NA', 'UPDATE      ',

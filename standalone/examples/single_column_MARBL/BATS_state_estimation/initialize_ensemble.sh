@@ -4,7 +4,7 @@
 
 # important paths, keep these absolute
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
-MOM6_BATS_DIR=$(pwd)
+MOM6_BATS_DIR=$(pwd -P)
 
 # ensemble size
 ENS_SIZE=80
@@ -47,7 +47,7 @@ do
     echo "advancing the model to day ${first_sample_day}..."
 
     sed -i "380 s/DAYMAX = .*/DAYMAX = ${first_sample_day}/" ${MOM6_BATS_DIR}/ensemble/baseline/MOM_input
-    back=$(pwd)
+    back=$(pwd -P)
     cd ${MOM6_BATS_DIR}/ensemble/baseline
 
     echo ""
@@ -107,7 +107,7 @@ do
 
         echo "advancing the model to day ${currentday}..."
 
-        back=$(pwd)
+        back=$(pwd -P)
         cd ${MOM6_BATS_DIR}/ensemble/baseline
 
         echo ""

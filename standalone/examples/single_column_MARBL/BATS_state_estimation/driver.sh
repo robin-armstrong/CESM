@@ -9,8 +9,8 @@ START_CLEAN=true
 MOM6_BIN=~/work/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 
 # important filesystem paths, keep these absolute
-MOM6_BATS_DIR=$(pwd)                        # working directory for MOM6
-OBSSEQ_DIR=~/work/BATS_obsseq               # location of obs-sequence files
+MOM6_BATS_DIR=$(pwd -P)                                                    # working directory for MOM6
+OBSSEQ_DIR=~/work/DART/observations/obs_converters/BATS/obs_seq_files   # location of obs-sequence files
 
 # ensemble size
 ENS_SIZE=80
@@ -34,8 +34,6 @@ if [ ${process_id} -eq 1 ]; then
     echo "================================================================"
     echo ""
     
-    rm -f ${MOM6_BATS_DIR}/.stop_cycle
-
     if ${START_CLEAN}; then
         echo "deleting old DART output files..."
 
@@ -62,7 +60,7 @@ if [ ${process_id} -eq 1 ]; then
 
         echo "generating inflation restart files..."
 
-        back=$(pwd)
+        back=$(pwd -P)
         cd ${MOM6_BATS_DIR}/DART
 
         echo ""
@@ -112,11 +110,6 @@ fi
 
 while true
 do
-    # checking for an "exit" signal from process no. 1
-    if [ -f ${MOM6_BATS_DIR}/.stop_cycle ]; then
-        exit
-    fi
-
     # process no. 1 performs data assimilation and file organization
     if [ ${process_id} -eq 1 ]; then
         echo "archiving the state of member 1..."
@@ -135,7 +128,7 @@ do
             sed -i "56 s%obs_sequence_in_name.*%obs_sequence_in_name ='\\${OBSSEQ_DIR}/BATS_${currentday_dart}.out',%" ${MOM6_BATS_DIR}/DART/input.nml
             sed -i "57 s%obs_sequence_out_name.*%obs_sequence_out_name ='\\${outputdir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
 
-            back=$(pwd)
+            back=$(pwd -P)
             cd ${MOM6_BATS_DIR}/DART
 
             echo ""
@@ -198,9 +191,15 @@ do
             rm ${MOM6_BATS_DIR}/.begin_mom6_$(printf "%04d" ${process_id})
             break
         fi
+
+        # checking for an "exit" signal from process no. 1
+        if [ -f "${MOM6_BATS_DIR}/.stop_cycle_$(printf "%04d" ${process_id})" ]; then
+            rm ${MOM6_BATS_DIR}/.stop_cycle_$(printf "%04d" ${process_id})
+            exit
+        fi
     done
 
-    back=$(pwd)
+    back=$(pwd -P)
     cd ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${process_id})
     mom6_log=mom6_logfile_${process_id}.txt
     rm -f ${mom6_log}
@@ -241,8 +240,15 @@ do
         currentday_dart=${tomorrow_dart}
 
         if [ ${currentday_dart} -eq ${LASTDAY_DART} ]; then
-            touch ${MOM6_BATS_DIR}/.stop_cycle
             echo "assimilation loop complete."
+            echo "sending exit signal to ensemble members..."
+
+            for i in $(seq ${ENS_SIZE}); do
+                touch ${MOM6_BATS_DIR}/.stop_cycle_$(printf "%04d" ${i})
+            done
+
+            rm ${MOM6_BATS_DIR}/.stop_cycle_0001
+
             echo "exiting..."
             echo ""
 
