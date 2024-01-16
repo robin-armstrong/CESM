@@ -7,35 +7,33 @@ import netCDF4 as nc
 
 paramlist = ["autotroph_settings(1)%kDOP",
              "autotroph_settings(1)%kNH4"]
-ens_path  = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS/ensemble"
 
 ################### MAIN PROGRAM ########################
 
 mode     = sys.argv[1]
-ens_size = round(float(sys.argv[2]))
-filename = sys.argv[3]
-day      = sys.argv[4]
+ens_path = sys.argv[2]
+ens_size = round(float(sys.argv[3]))
+filename = sys.argv[4]
 
 record   = nc.Dataset(filename, "a")
 
 if(mode == "init"):
-    time              = record.createDimension("Time")
-    day_var           = record.createVariable("day", "int", ("Time",))
-    day_var.long_name = "Simulation time, in the DART calendar"
+    record.createDimension("AssimilationCycle")
+    record.createDimension("EnsembleMemberIndex")
 
     for param in paramlist:
-        param_mean             = record.createVariable("average_"+param, "double", ("Time",))
+        param_value            = record.createVariable(param, "double", ("AssimilationCycle", "EnsembleMemberIndex",))
+        param_mean             = record.createVariable("average_"+param, "double", ("AssimilationCycle",))
         param_mean.long_name   = "Ensemble mean for parameter "+param
-        param_stddev           = record.createVariable("stddev_"+param, "double", ("Time",))
+        param_stddev           = record.createVariable("stddev_"+param, "double", ("AssimilationCycle",))
         param_stddev.long_name = "Ensemble standard deviation for parameter "+param
 
 elif(mode == "record"):
-    index = record["day"].shape[0]
-    record["day"][index] = day
+    cycle_index = record["average_"+paramlist[0]].shape[0]
 
     for param in paramlist:
-        mean    = 0.
-        sq_mean = 0.
+        mean        = 0.
+        sq_mean     = 0.
 
         pname_regex = re.compile(r'^[^\s]+')
         pval_regex  = re.compile(r'[^\s]+$')
@@ -57,14 +55,17 @@ elif(mode == "record"):
                 
                 pval_array = re.findall(pval_regex, line)
                 pval       = float(pval_array[0])
+
+                record[param][cycle_index, member_id - 1] = pval
+
                 mean      += pval
                 sq_mean   += pval**2
         
         mean    /= ens_size
         sq_mean /= ens_size
         
-        record["average_"+param][index] = mean
-        record["stddev_"+param][index]     = np.sqrt(sq_mean - mean**2)
+        record["average_"+param][cycle_index] = mean
+        record["stddev_"+param][cycle_index]  = np.sqrt(sq_mean - mean**2)
 else:
     print("Unrecognized mode option.")
 

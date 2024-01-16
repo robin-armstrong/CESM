@@ -39,12 +39,12 @@
    output_state_file_list = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/DART/ensemble_states.txt', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/DART/ensemble_params.txt',
    output_interval              = 1,
    output_members               = .true.,
-   num_output_state_members = 80,
+   num_output_state_members = 3
    output_mean                  = .true.,
    output_sd                    = .true.,
    write_all_stages_at_end = .true.,
 
-   ens_size = 80,
+   ens_size = 3
    num_groups                   = 1,
    perturb_from_single_instance = .false.,
    perturbation_amplitude       = 1e-2,
@@ -53,9 +53,9 @@
    async                        = 0,
    adv_ens_command              = "./advance_model.csh",
 
-   obs_sequence_in_name ='/glade/work/rarmstrong/BATS_obsseq/BATS_147638.out',
-   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/output/147638/obs_seq.final',
-   num_output_obs_members = 80,
+   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files/clim_BATS_352.out',
+   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/output/cycle_003/day_352/obs_seq.final',
+   num_output_obs_members = 3
    init_time_days               = -1,
    init_time_seconds            = -1,
    first_obs_days               = -1,
@@ -63,7 +63,7 @@
    last_obs_days                = -1,
    last_obs_seconds             = -1,
 
-   inf_flavor                  = 5,                       0,
+   inf_flavor                  = 0,                       0,
    inf_initial_from_restart    = .true.,                 .false.,
    inf_sd_initial_from_restart = .true.,                  .false.,
    inf_deterministic           = .true.,                  .true.,
@@ -90,7 +90,7 @@
    post_inf_mean     = 1.00,
    post_inf_sd       = 0.6,
 
-   input_state_files = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/INPUT/marbl_params.nc',
+   input_state_files = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/clim_000.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/params_000.nc'
    single_file       = .false.,
    verbose           = .false.
    /
@@ -128,33 +128,33 @@
    /
 
 &obs_kind_nml
-   evaluate_these_obs_types = 'BATS_OXYGEN',
-                              'BATS_ALKALINITY',
-                              'BATS_INORGANIC_CARBON',
-				                  'BATS_SILICATE',
-				                  'BATS_PHOSPHATE',
-                              'BATS_NITRATE',
-                              'BATS_NITROGEN',
-				                  'BATS_ORGANIC_CARBON'
+   assimilate_these_obs_types = 'BATS_OXYGEN',
+                                'BATS_ALKALINITY',
+                                'BATS_INORGANIC_CARBON',
+				                    'BATS_SILICATE',
+				                    'BATS_PHOSPHATE',
+                                'BATS_NITRATE',
+   evaluate_these_obs_types   = 'BATS_NITROGEN',
+				                    'BATS_ORGANIC_CARBON'
    /
 
 &model_nml
-   template_file         = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/RESTART/MOM.res.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/INPUT/marbl_params.nc',
+   template_file         = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/clim_000.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/params_000.nc'
    time_step_days        = 1,
    time_step_seconds     = 0,
-   model_state_variables = 'NO3      ', 'QTY_NITRATE_CONCENTRATION     ', '0.0', 'NA', 'UPDATE      ',
-                           'SiO3     ', 'QTY_DISSOLVED_INORGANIC_SIO3  ', '0.0', 'NA', 'UPDATE      ',
-                           'PO4      ', 'QTY_PHOSPHATE_CONCENTRATION   ', '0.0', 'NA', 'UPDATE      ',
-                           'Fe       ', 'QTY_DISSOLVED_INORGANIC_IRON  ', '0.0', 'NA', 'UPDATE      ',
-                           'DIC      ', 'QTY_DISSOLVED_INORGANIC_CARBON', '0.0', 'NA', 'UPDATE      ',
-                           'O2       ', 'QTY_DISSOLVED_OXYGEN          ', '0.0', 'NA', 'UPDATE      ',
-                           'DOC      ', 'QTY_DISSOLVED_ORGANIC_CARBON  ', '0.0', 'NA', 'UPDATE      ',
-                           'DON      ', 'QTY_DISSOLVED_ORGANIC_NITROGEN', '0.0', 'NA', 'UPDATE      ',
-                           'DOP      ', 'QTY_DISSOLVED_ORGANIC_P       ', '0.0', 'NA', 'UPDATE      ',
-                           'ALK      ', 'QTY_ALKALINITY                ', '0.0', 'NA', 'UPDATE      ',
-                           'microzooC', 'QTY_MICROZOOPLANKTON_CARBON   ', '0.0', 'NA', 'UPDATE      ',
-                           'mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'UPDATE      ',
-                           'h        ', 'QTY_LAYER_THICKNESS           ', '0.0', 'NA', 'NO_COPY_BACK'
+   model_state_variables = 'clim_NO3      ', 'QTY_NITRATE_CONCENTRATION     ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_SiO3     ', 'QTY_DISSOLVED_INORGANIC_SIO3  ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_PO4      ', 'QTY_PHOSPHATE_CONCENTRATION   ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_Fe       ', 'QTY_DISSOLVED_INORGANIC_IRON  ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_DIC      ', 'QTY_DISSOLVED_INORGANIC_CARBON', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_O2       ', 'QTY_DISSOLVED_OXYGEN          ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_DOC      ', 'QTY_DISSOLVED_ORGANIC_CARBON  ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_DON      ', 'QTY_DISSOLVED_ORGANIC_NITROGEN', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_DOP      ', 'QTY_DISSOLVED_ORGANIC_P       ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_ALK      ', 'QTY_ALKALINITY                ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_microzooC', 'QTY_MICROZOOPLANKTON_CARBON   ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'clim_mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'NO_COPY_BACK',
+                           'Layer         ', 'QTY_COLUMN_DEPTH              ', 'NA ', 'NA', 'NO_COPY_BACK'
    estimate_params       = .true.
    model_parameters      = 'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE',
                            'autotroph_settings(1)%kNH4 ', 'QTY_PARAM_AUTOTROPH1_KNH4 ', '0.0', 'NA', 'UPDATE'
@@ -220,13 +220,13 @@
    /
 
 &model_mod_check_nml
-   input_state_files    = '../ensemble/baseline/RESTART/MOM.res.nc'
-   output_state_files   = 'testing/model_mod_check_output/output.nc'
+   input_state_files    = '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/clim_000.nc', '/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/params_000.nc'
+   output_state_files   = 'model_mod_check_output.nc'
    test1thru            = 0,
    run_tests            = 1,2,3,4,5,6,7
    x_ind                = 261
-   loc_of_interest      = 1.11, 0.54, -500.0
-   quantity_of_interest = 'BATS_NITROGEN'
+   loc_of_interest      = 1.11, 0.54, 45.0
+   quantity_of_interest = 'QTY_DISSOLVED_ORGANIC_NITROGEN'
    interp_test_dx       = 0.02
    interp_test_xrange   = 0.0, 1.0
    verbose              = .true.

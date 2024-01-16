@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# ======================= SCRIPT PARAMETERS =======================
-
-# if 'true', then the script will erase old DART outputs and start clean
-START_CLEAN=true
+# =====================================================================================
+# ======================= SCRIPT PARAMETERS ===========================================
+# =====================================================================================
 
 # important paths, keep these absolute
 MOM6_BIN=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
@@ -12,16 +11,20 @@ MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components
 OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files
 
 # data assimilation parameters
-ENS_SIZE=2
-EQ_YEARS=1          # number of years that MARBL will be integrated to reach quasi-equilibrium
-NUM_CYCLES=1        # number of data assimilation cycles
+ENS_SIZE=3    # number of ensemble members
+EQ_YEARS=1    # number of years that MARBL will be integrated to reach quasi-equilibrium
+NUM_CYCLES=3   # number of data assimilation cycles
 
 # other
-PROG_FILE=prog.nc       # the name of a MOM6 diagnostic file which records time-series for all MARBL variables with daily resolution
-MOM6_TO_DART=139157     # offset between MOM6 and DART calendars
+NUM_LAYERS=20           # number of vertical ocean layers used to record climatologies
+MIN_DEPTH=1.0           # smallest depth (in meters) at which climatologies are recorded
+MAX_DEPTH=4500.0        # greatest depth (in meters) at which climatologies are recorded
+PROG_FILE=prog.nc       # the name (without path) of a MOM6 diagnostic file which records time-series for all MARBL variables with daily resolution
 SEED=1                  # random seed for generating initial parameter perturbations
 
-# ======================= MAIN PROGRAM =======================
+# =====================================================================================
+# ======================= MAIN PROGRAM ================================================
+# =====================================================================================
 
 process_id=${1}
 module load nco
@@ -30,12 +33,19 @@ source ${CONDA_ACTIVATE} marbl-dart
 let eq_days=${EQ_YEARS}*365
 
 if [ ${process_id} -eq 1 ] && ${START_CLEAN}; then
-    echo "deleting old ensemble..."
+    echo ""
+    echo "================================================================"
+    echo "============================ DRIVER ============================"
+    echo "================================================================"
+    echo ""
 
+    echo "deleting old ensemble..."
     rm -rf ${MOM6_BATS_DIR}/ensemble/*
 
+    echo "deleting old output files...\n"
+    rm -rf ${MOM6_BATS_DIR}/output/*
+
     for i in $(seq ${ENS_SIZE}); do
-        echo ""
         echo "initializing data for ensemble member ${i}..."
 
         memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
@@ -43,35 +53,46 @@ if [ ${process_id} -eq 1 ] && ${START_CLEAN}; then
         cp -Lr ${MOM6_BATS_DIR}/baseline_state/* ${memberdir}
         mkdir ${memberdir}/climatology
 
-        echo "perturbing parameters for ensemble member ${i}..."
+        echo "perturbing parameters for ensemble member ${i}...\n"
 
         cp ${memberdir}/INPUT/marbl_in ${memberdir}/INPUT/marbl_in_temp
         rm ${memberdir}/INPUT/marbl_in
         let randomseed=${SEED}+${process_id}
-        python3 ${MOM6_BATS_DIR}/perturb_params.py ${memberdir}/INPUT/marbl_in_temp ${randomseed} ${memberdir}/INPUT/marbl_in
+        python3 ${MOM6_BATS_DIR}/python_scripts/perturb_params.py ${memberdir}/INPUT/marbl_in_temp ${randomseed} ${memberdir}/INPUT/marbl_in 2>&1
         rm ${memberdir}/INPUT/marbl_in_temp
-
-        echo "creating parameter netCDF file for member ${i}..."
-        python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${FIRSTDAY_MOM6} ${memberdir}/INPUT/marbl_params.nc
     done
+
+    echo "initiating record of ensemble parameter statistics..."
+
+    mkdir -p ${MOM6_BATS_DIR}/output/parameter_record
+    python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "init" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
 
     echo "preparing temp directory..."
     export TMPDIR=/glade/scratch/${USER}/marbl_mom6_dart_temp
     mkdir -p ${TMPDIR}
 
+    echo "setting ensemble size in DART namelist..."
+
+    sed -i "s/num_output_state_members.*/num_output_state_members = ${ENS_SIZE}/" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "s/num_output_obs_members.*/num_output_obs_members = ${ENS_SIZE}/" ${MOM6_BATS_DIR}/DART/input.nml
+    sed -i "s/ens_size.*/ens_size = ${ENS_SIZE}/" ${MOM6_BATS_DIR}/DART/input.nml
+
     echo "setting integration length to ${eq_days} days..."
 
     for i in $(seq ${ENS_SIZE}); do
-        sed -i "380 s/DAYMAX = .*/DAYMAX = ${eq_days}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
+        sed -i "s/DAYMAX = .*/DAYMAX = ${eq_days}/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
+        sed -i "s/DT = .*/DT = 14400/" ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/MOM_input
     done
 
     echo "beginning the assimilation loop..."
 fi
 
-completed_cycles=0
+cycle_number=0
 
 # data assimilation loop
-while [ ${completed_cycles} -lt ${NUM_CYCLES} ]; do
+while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
+    let cycle_number=${cycle_number}+1
+
     if [ ${process_id} -eq 1 ]; then
         echo "integrating the ensemble..."
         echo ""
@@ -84,7 +105,7 @@ while [ ${completed_cycles} -lt ${NUM_CYCLES} ]; do
         done
     fi
 
-    # waiting for permission from process no. 1 to run MOM6
+    # waiting for permission from process no. 1 to begin the next integration
     while true; do
         if [ -f "${MOM6_BATS_DIR}/.begin_mom6_$(printf "%04d" ${process_id})" ]; then
             rm ${MOM6_BATS_DIR}/.begin_mom6_$(printf "%04d" ${process_id})
@@ -95,14 +116,68 @@ while [ ${completed_cycles} -lt ${NUM_CYCLES} ]; do
     done
 
     memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${process_id})
+    logfile=${memberdir}/member_$(printf "%04d" ${process_id})_logfile.txt
+
+    if [ ${cycle_number} -eq 1 ]; then
+        rm -f ${logfile}
+
+        echo "================================================================" >> ${logfile}
+        echo "============================ DRIVER ============================" >> ${logfile}
+        echo "================================================================" >> ${logfile}
+        echo ""                                                                 >> ${logfile}
+    fi
+
+    echo "ASSIMILATION CYCLE ${cycle_number}:" >> ${logfile}
+    echo ""                                    >> ${logfile}
+
+    if [ 1 -lt ${cycle_number} ]; then
+        echo "refreshing MARBL parameters..." >> ${logfile}
+        
+        python3 ${MOM6_BATS_DIR}/python_scripts/combine_innovations.py ${memberdir}/climatology ${NUM_LAYERS} >> ${logfile} 2>&1
+
+        # moving the old parameter list to a temp file that will soon be deleted
+        cp ${memberdir}/INPUT/marbl_in ${memberdir}/INPUT/marbl_in_temp
+        rm ${memberdir}/INPUT/marbl_in
+
+        # generating the new parameter file from DART output
+        python3 ${MOM6_BATS_DIR}/python_scripts/dart_to_marbl.py ${memberdir}/climatology/analysis_params.nc ${memberdir}/INPUT/marbl_in_temp ${memberdir}/INPUT/marbl_in ${NUM_LAYERS} >> ${logfile} 2>&1
+        rm ${memberdir}/INPUT/marbl_in_temp
+    fi
+
+    echo "initiating ${EQ_YEARS}-year MARBL integration for member ${process_id}..." >> ${logfile}
+    
     back=$(pwd -P)
 
-    cd ${memberdir}
-    ${MOM6_BIN}
+    echo ""                                                                 >> ${logfile}
+    echo "================================================================" >> ${logfile}
+    echo "========================== MARBL / MOM6 ========================" >> ${logfile}
+    echo "================================================================" >> ${logfile}
+    echo ""                                                                 >> ${logfile}
 
+    cd ${memberdir}
+    ${MOM6_BIN} >> ${logfile}
     cd ${back}
-    rm ${memberdir}/climatology/*
-    python3 ${MOM6_BATS_DIR}/create_climatology.py ${EQ_YEARS} ${memberdir}/${PROG_FILE} ${memberdir}/climatology
+
+    echo ""                                                                 >> ${logfile}
+    echo "================================================================" >> ${logfile}
+    echo "============================ DRIVER ============================" >> ${logfile}
+    echo "================================================================" >> ${logfile}
+    echo ""                                                                 >> ${logfile}
+
+    echo "finished MARBL integration."                              >> ${logfile}
+    echo "generating climatology files for member ${process_id}..." >> ${logfile}
+    
+    rm -f ${memberdir}/climatology/clim_*
+    python3 ${MOM6_BATS_DIR}/python_scripts/create_climatology.py ${EQ_YEARS} ${memberdir}/${PROG_FILE} ${memberdir}/climatology ${MIN_DEPTH} ${MAX_DEPTH} ${NUM_LAYERS} >> ${logfile} 2>&1
+
+    echo "creating parameter netCDF files for member ${process_id}..." >> ${logfile}
+
+    rm -f ${memberdir}/climatology/params_*
+    rm -f ${memberdir}/climatology/analysis_params.nc
+    rm -f ${memberdir}/climatology/forecast_params.nc
+
+    python3 ${MOM6_BATS_DIR}/python_scripts/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${memberdir}/climatology ${NUM_LAYERS} >> ${logfile} 2>&1
+    cp ${memberdir}/climatology/params_000.nc ${memberdir}/climatology/forecast_params.nc
 
     touch ${MOM6_BATS_DIR}/.mom6_complete_$(printf "%04d" ${process_id})
     
@@ -134,9 +209,68 @@ while [ ${completed_cycles} -lt ${NUM_CYCLES} ]; do
         let diff=${current_seconds}-${init_seconds}
 
         echo "integration wall-time: ${diff} seconds."
+        echo "archiving MOM integration logfiles..."
+
+        mkdir -p ${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/integration_logfiles
+        
+        for i in $(seq ${ENS_SIZE}); do
+            logfile=member_$(printf "%04d" ${i})_logfile.txt
+            mv ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/${logfile} ${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/integration_logfiles/${logfile}
+        done
+
+        echo "beginning data assimilation."
+        echo ""
+
+        for day_raw in $(seq 365); do
+            let day=${day_raw}-1
+
+            echo "searching for data on day ${day} out of 364..."
+
+            if [ -f "${OBSSEQ_DIR}/clim_BATS_$(printf "%03d" ${day}).out" ]; then
+                echo "found file: ${OBSSEQ_DIR}/clim_BATS_$(printf "%03d" ${day}).out"
+                echo "assimilating with DART..."
+
+                state_list=${MOM6_BATS_DIR}/DART/ensemble_states.txt
+                param_list=${MOM6_BATS_DIR}/DART/ensemble_params.txt
+
+                rm -f ${state_list}
+                rm -f ${param_list}
+
+                for ens_index in $(seq ${ENS_SIZE}); do
+                    echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${ens_index})/climatology/clim_$(printf "%03d" ${day}).nc" >> ${state_list}
+                    echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${ens_index})/climatology/params_$(printf "%03d" ${day}).nc" >> ${param_list}
+                done
+
+                out_dir=${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/day_$(printf "%03d" ${day})
+                mkdir ${out_dir}
+
+                sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='${OBSSEQ_DIR}/clim_BATS_$(printf "%03d" ${day}).out',%" ${MOM6_BATS_DIR}/DART/input.nml
+                sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='${out_dir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
+
+                back=$(pwd -P)
+                cd ${MOM6_BATS_DIR}/DART
+
+                ./filter >> /dev/null
+
+                mv preassim_mean_* ${out_dir}
+                mv preassim_sd_* ${out_dir}
+                mv analysis_mean_* ${out_dir}
+                mv analysis_sd_* ${out_dir}
+                mv output_mean_* ${out_dir}
+                mv output_sd_* ${out_dir}
+                mv dart_log.out ${out_dir}
+
+                for file in $(ls -I fill_inflation_restart -I filter -I model_mod_check -I obs_diag -I input.nml -I .gitignore); do
+                    rm ${file}
+                done
+
+                cd ${back}
+            else
+                echo "no data found."
+            fi
+        done
+
+        echo "recording the current parameter statistics..."
+        python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "record" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
     fi
-
-    # DATA ASSIMILATION HAPPENS HERE
-
-    let completed_cycles=${completed_cycles}+1
 done
