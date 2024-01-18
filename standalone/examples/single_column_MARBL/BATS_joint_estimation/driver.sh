@@ -9,7 +9,7 @@ START_CLEAN=true
 MOM6_BIN=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation
-OBSSEQ_DIR=~/work/DART/observations/obs_converters/BATS/obs_seq_files
+OBSSEQ_DIR=/glade/work/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files
 ENS_BACKUP_DIR=/glade/u/home/rarmstrong/marbldart_ensemble_backup
 
 # ensemble size
@@ -62,7 +62,7 @@ if [ ${process_id} -eq 1 ]; then
 
         echo "initiating record of ensemble parameter statistics..."
 
-        python3 ${MOM6_BATS_DIR}/record_params.py "init" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 0
+        python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "init" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 0
 
         echo "configuring the DART namelist file..."
 
@@ -74,7 +74,7 @@ if [ ${process_id} -eq 1 ]; then
         sed -i "47 s/ens_size = .*/ens_size = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
         sed -i "49 s/perturb_from_single_instance = .*/perturb_from_single_instance = .false.,/" ${MOM6_BATS_DIR}/DART/input.nml
         sed -i "58 s/num_output_obs_members = .*/num_output_obs_members = ${ENS_SIZE},/" ${MOM6_BATS_DIR}/DART/input.nml
-        sed -i "141 s%template_file = .*%template_file = '${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc', '${MOM6_BATS_DIR}/ensemble/member_0001/INPUT/marbl_params.nc',%" ${MOM6_BATS_DIR}/DART/input.nml
+        sed -i "141 s%template_file = .*%template_file = '${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc', '${MOM6_BATS_DIR}/ensemble/member_0001/marbl_params.nc',%" ${MOM6_BATS_DIR}/DART/input.nml
 
         echo "generating inflation restart files..."
 
@@ -120,7 +120,7 @@ do
     if [ ${process_id} -eq 1 ]; then
         echo "archiving the state of member 1..."
         cp ${MOM6_BATS_DIR}/ensemble/member_0001/RESTART/MOM.res.nc ${MOM6_BATS_DIR}/output/member_0001_archive/${currentday_dart}.state.nc
-        cp ${MOM6_BATS_DIR}/ensemble/member_0001/INPUT/marbl_params.nc ${MOM6_BATS_DIR}/output/member_0001_archive/${currentday_dart}.params.nc
+        cp ${MOM6_BATS_DIR}/ensemble/member_0001/marbl_params.nc ${MOM6_BATS_DIR}/output/member_0001_archive/${currentday_dart}.params.nc
 
         echo "searching for an obs-sequence file for day ${currentday_mom6} (MOM6 calendar)..."
         echo "                                           ${currentday_dart} (DART calendar)..."
@@ -169,7 +169,7 @@ do
 
             echo "recording the current parameter statistics..."
 
-            python3 ${MOM6_BATS_DIR}/record_params.py "record" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc ${currentday_dart}
+            python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "record" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc ${currentday_dart}
             
             echo "preparing inflation files for the next assimilation cycle..."
             cp ${outputdir}/output_priorinf_mean_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d01.nc
@@ -226,19 +226,19 @@ do
         
         # moving the old parameter file to a temp file that will soon be deleted
         memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${process_id})
-        cp ${memberdir}/INPUT/marbl_in ${memberdir}/INPUT/marbl_in_temp
-        rm ${memberdir}/INPUT/marbl_in
+        cp ${memberdir}/marbl_in ${memberdir}/marbl_in_temp
+        rm ${memberdir}/marbl_in
 
         # generating the new parameter file from DART output
-        python3 ${MOM6_BATS_DIR}/dart_to_marbl.py ${memberdir}/INPUT/marbl_params.nc ${memberdir}/INPUT/marbl_in_temp ${memberdir}/INPUT/marbl_in
-        rm ${memberdir}/INPUT/marbl_in_temp
-        rm ${memberdir}/INPUT/marbl_params.nc
+        python3 ${MOM6_BATS_DIR}/python_scripts/dart_to_marbl.py ${memberdir}/marbl_params.nc ${memberdir}/marbl_in_temp ${memberdir}/marbl_in
+        rm ${memberdir}/marbl_in_temp
+        rm ${memberdir}/marbl_params.nc
 
         # regenerating the DART parameter file so that it has a correct timestamp,
         # this also has the effect of equalizing parameter values across different layers
         # in the resulting NetCDF file. The shared parameter value is calculated by the
         # 'getvalue()' function in dart_to_marbl.py.
-        python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${currentday_mom6} ${memberdir}/INPUT/marbl_params.nc
+        python3 ${MOM6_BATS_DIR}/python_scripts/marbl_to_dart.py ${memberdir}/marbl_in ${currentday_mom6} ${memberdir}/marbl_params.nc
     fi
 
     back=$(pwd -P)

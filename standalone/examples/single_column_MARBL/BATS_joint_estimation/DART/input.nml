@@ -128,14 +128,13 @@
    /
 
 &obs_kind_nml
-   assimilate_these_obs_types = ''
-   evaluate_these_obs_types   = 'BATS_OXYGEN',
+   assimilate_these_obs_types = 'BATS_OXYGEN',
                                 'BATS_ALKALINITY',
                                 'BATS_INORGANIC_CARBON',
 				                    'BATS_SILICATE',
 				                    'BATS_PHOSPHATE',
-                                'BATS_NITRATE',
-                                'BATS_ORGANIC_CARBON',
+                                'BATS_NITRATE'
+   evaluate_these_obs_types   = 'BATS_ORGANIC_CARBON',
                                 'BATS_NITROGEN'
    /
 
@@ -157,8 +156,8 @@
                            'mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'UPDATE      ',
                            'h        ', 'QTY_LAYER_THICKNESS           ', '0.0', 'NA', 'NO_COPY_BACK'
    estimate_params       = .true.
-   model_parameters      = 'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE',
-                           'autotroph_settings(1)%kNH4 ', 'QTY_PARAM_AUTOTROPH1_KNH4 ', '0.0', 'NA', 'UPDATE'
+   model_parameters      = 'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE      ',
+                           'autotroph_settings(1)%kNH4 ', 'QTY_PARAM_AUTOTROPH1_KNH4 ', '0.0', 'NA', 'NO_COPY_BACK'
    /
 
 &utilities_nml

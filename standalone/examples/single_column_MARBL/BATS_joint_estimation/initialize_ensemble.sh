@@ -18,12 +18,12 @@ MIN_SPINUP_LENGTH=10
 
 # Member i undergoes a spinup of length (i + $MIN_SPINUP_LENGTH) % $SPINUP_LENGTH_MODULUS.
 # Varying spinup times are used to promote higher spread in the initial ensemble.
-SPINUP_LENGTH_MODULUS=40
+SPINUP_LENGTH_MODULUS=80
 
 # Length, in days, of yearly time interval where state samples are taken.
 # Yearly averages of these samples are recorded to serve as a diagnostic for
 # whether or not the spin-up reached steady state.
-SAMPLES_PER_YEAR=5
+SAMPLES_PER_YEAR=20
 
 # BGC variable that the yearly averages are computed for.
 BGC_VAR=O2
@@ -62,14 +62,14 @@ cp -Lr ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
 
 echo "perturbing the BGC parameters for member ${member_index}..."
 
-cp ${memberdir}/INPUT/marbl_in ${memberdir}/INPUT/marbl_in_temp
-rm ${memberdir}/INPUT/marbl_in
+cp ${memberdir}/marbl_in ${memberdir}/marbl_in_temp
+rm ${memberdir}/marbl_in
 let randomseed=${SEED}+${member_index}
-python3 ${MOM6_BATS_DIR}/perturb_params.py ${memberdir}/INPUT/marbl_in_temp ${randomseed} ${memberdir}/INPUT/marbl_in
-rm ${memberdir}/INPUT/marbl_in_temp
+python3 ${MOM6_BATS_DIR}/python_scripts/perturb_params.py ${memberdir}/marbl_in_temp ${randomseed} ${memberdir}/marbl_in 2>&1
+rm ${memberdir}/marbl_in_temp
 
 echo "creating parameter netCDF file for member ${member_index}..."
-python3 ${MOM6_BATS_DIR}/marbl_to_dart.py ${memberdir}/INPUT/marbl_in ${FIRSTDAY_MOM6} ${memberdir}/INPUT/marbl_params.nc
+python3 ${MOM6_BATS_DIR}/python_scripts/marbl_to_dart.py ${memberdir}/marbl_in ${FIRSTDAY_MOM6} ${memberdir}/marbl_params.nc 2>&1
 
 echo "beginning ${spinup_length}-year spinup for member ${member_index}..."
 echo "advancing member ${member_index} to day ${first_sample_day}..."
@@ -113,7 +113,7 @@ do
     for sample_num in $(seq ${SAMPLES_PER_YEAR})
     do
         echo "taking sample on day ${currentday}..."
-        python3 ${MOM6_BATS_DIR}/record_spinup.py ${BGC_VAR} ${spinup_time} ${sample_num} ${memberdir}/RESTART/MOM.res.nc ${memberdir}/spinup_record.nc
+        python3 ${MOM6_BATS_DIR}/python_scripts/record_spinup.py ${BGC_VAR} ${spinup_time} ${sample_num} ${memberdir}/RESTART/MOM.res.nc ${memberdir}/spinup_record.nc 2>&1
 
         let currentday=${currentday}+1
         echo "advancing member ${member_index} to day ${currentday}..."
@@ -219,7 +219,7 @@ if [ ${member_index} -eq 1 ]; then
 
     for i in $(seq ${ENS_SIZE}); do
         echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/RESTART/MOM.res.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_states.txt
-        echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/INPUT/marbl_params.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_params.txt
+        echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/marbl_params.nc" >> ${MOM6_BATS_DIR}/DART/ensemble_params.txt
     done
 
     echo "finished creating ensemble member lists."
