@@ -58,7 +58,12 @@ rm -rf ${memberdir}
 echo "creating directory for member ${member_index}..."
 
 mkdir ${memberdir}
-cp -Lr ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
+cp -r ${MOM6_BATS_DIR}/ensemble/baseline/* ${memberdir}
+
+echo "creating a local copy of marbl_in..."
+
+cp ${memberdir}/INPUT/marbl_in ${memberdir}/marbl_in
+sed -i "s%MARBL_SETTINGS_FILE.*%MARBL_SETTINGS_FILE = \"marbl_in\"%" ${memberdir}/MOM_input
 
 echo "perturbing the BGC parameters for member ${member_index}..."
 
