@@ -9,7 +9,7 @@ START_CLEAN=true
 MOM6_BIN=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation
-OBSSEQ_DIR=/glade/work/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files
+OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files
 ENS_BACKUP_DIR=/glade/u/home/rarmstrong/marbldart_ensemble_backup
 
 # ensemble size

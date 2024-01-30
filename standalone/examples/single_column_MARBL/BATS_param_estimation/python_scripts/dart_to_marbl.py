@@ -16,7 +16,6 @@ def getvalue(param_array):
 dart_in   = nc.Dataset(sys.argv[1], "r")
 marbl_in  = open(sys.argv[2], "r")
 marbl_out = open(sys.argv[3], "w")
-numlayers = round(float(sys.argv[4]))
 
 # regular expressions to extract parameter name from text
 pname_regex = re.compile(r'^[^\s]+')
