@@ -11,8 +11,8 @@ MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components
 OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim/obs_seq_files
 
 # data assimilation parameters
-ENS_SIZE=2    # number of ensemble members
-EQ_YEARS=1    # number of years that MARBL will be integrated to reach quasi-equilibrium
+ENS_SIZE=3    # number of ensemble members
+EQ_YEARS=2    # number of years that MARBL will be integrated to reach quasi-equilibrium
 NUM_CYCLES=3  # number of data assimilation cycles
 
 # other
@@ -239,13 +239,25 @@ while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
                 out_dir=${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/month_$(printf "%02d" ${month})
                 mkdir ${out_dir}
 
-                sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='${OBSSEQ_DIR}/clim_BATS_$(printf "%02d" ${month}).out',%" ${MOM6_BATS_DIR}/DART/input.nml
+                sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='${OBSSEQ_DIR}/BATS_clim_$(printf "%02d" ${month}).out',%" ${MOM6_BATS_DIR}/DART/input.nml
                 sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='${out_dir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
 
                 back=$(pwd -P)
                 cd ${MOM6_BATS_DIR}/DART
 
-                ./filter >> /dev/null
+                echo ""
+                echo "================================================================"
+                echo "============================ DART =============================="
+                echo "================================================================"
+                echo ""
+
+                ./filter
+
+                echo ""
+                echo "================================================================"
+                echo "============================ DRIVER ============================"
+                echo "================================================================"
+                echo ""
 
                 mv preassim_mean_* ${out_dir}
                 mv preassim_sd_* ${out_dir}
