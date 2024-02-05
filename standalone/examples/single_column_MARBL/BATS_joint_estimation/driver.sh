@@ -62,7 +62,7 @@ if [ ${process_id} -eq 1 ]; then
 
         echo "initiating record of ensemble parameter statistics..."
 
-        python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "init" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 0
+        python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "init" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 0 2>&1
 
         echo "configuring the DART namelist file..."
 
@@ -169,7 +169,7 @@ do
 
             echo "recording the current parameter statistics..."
 
-            python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "record" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc ${currentday_dart}
+            python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "record" ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc ${currentday_dart} 2>&1
             
             echo "preparing inflation files for the next assimilation cycle..."
             cp ${outputdir}/output_priorinf_mean_d01.nc ${MOM6_BATS_DIR}/DART/input_priorinf_mean_d01.nc
@@ -230,7 +230,7 @@ do
         rm ${memberdir}/marbl_in
 
         # generating the new parameter file from DART output
-        python3 ${MOM6_BATS_DIR}/python_scripts/dart_to_marbl.py ${memberdir}/marbl_params.nc ${memberdir}/marbl_in_temp ${memberdir}/marbl_in
+        python3 ${MOM6_BATS_DIR}/python_scripts/dart_to_marbl.py ${memberdir}/marbl_params.nc ${memberdir}/marbl_in_temp ${memberdir}/marbl_in 2>&1
         rm ${memberdir}/marbl_in_temp
         rm ${memberdir}/marbl_params.nc
 
@@ -238,7 +238,7 @@ do
         # this also has the effect of equalizing parameter values across different layers
         # in the resulting NetCDF file. The shared parameter value is calculated by the
         # 'getvalue()' function in dart_to_marbl.py.
-        python3 ${MOM6_BATS_DIR}/python_scripts/marbl_to_dart.py ${memberdir}/marbl_in ${currentday_mom6} ${memberdir}/marbl_params.nc
+        python3 ${MOM6_BATS_DIR}/python_scripts/marbl_to_dart.py ${memberdir}/marbl_in ${currentday_mom6} ${memberdir}/marbl_params.nc 2>&1
     fi
 
     back=$(pwd -P)

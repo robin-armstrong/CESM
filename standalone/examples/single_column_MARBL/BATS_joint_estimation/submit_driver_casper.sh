@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#PBS -N marbldart_paramdemo
+#PBS -N marbldart_jointdemo
 #PBS -A p93300012
-#PBS -J 1-3
+#PBS -J 1-80
 #PBS -l select=1:ncpus=4:mpiprocs=1
 #PBS -l walltime=12:00:00
 #PBS -q casper

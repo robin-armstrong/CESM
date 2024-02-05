@@ -54,7 +54,7 @@
    adv_ens_command              = "./advance_model.csh",
 
    obs_sequence_in_name ='/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim/obs_seq_files/BATS_clim_12.out',
-   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/output/cycle_003/month_12/obs_seq.final',
+   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/output/cycle_001/month_12/obs_seq.final',
    num_output_obs_members = 3
    init_time_days               = -1,
    init_time_seconds            = -1,
@@ -155,8 +155,7 @@
                            'clim_microzooC', 'QTY_MICROZOOPLANKTON_CARBON   ', '0.0', 'NA', 'NO_COPY_BACK',
                            'clim_mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'NO_COPY_BACK',
                            'Layer         ', 'QTY_COLUMN_DEPTH              ', 'NA ', 'NA', 'NO_COPY_BACK'
-   model_parameters      = 'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE',
-                           'autotroph_settings(1)%kNH4 ', 'QTY_PARAM_AUTOTROPH1_KNH4 ', '0.0', 'NA', 'UPDATE'
+   model_parameters      = 'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE'
    /
 
 &utilities_nml

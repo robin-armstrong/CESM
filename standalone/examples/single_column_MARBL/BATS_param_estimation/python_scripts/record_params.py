@@ -5,8 +5,7 @@ import netCDF4 as nc
 
 ################### SCRIPT PARAMETERS ###################
 
-paramlist = ["autotroph_settings(1)%kDOP",
-             "autotroph_settings(1)%kNH4"]
+paramlist = ["autotroph_settings(1)%kDOP"]
 
 ################### MAIN PROGRAM ########################
 
@@ -65,7 +64,7 @@ elif(mode == "record"):
         sq_mean /= ens_size
         
         record["average_"+param][cycle_index] = mean
-        record["stddev_"+param][cycle_index]  = np.sqrt(sq_mean - mean**2)
+        record["stddev_"+param][cycle_index]  = np.sqrt(np.max([sq_mean - mean**2, 0.]))
 else:
     print("Unrecognized mode option.")
 
