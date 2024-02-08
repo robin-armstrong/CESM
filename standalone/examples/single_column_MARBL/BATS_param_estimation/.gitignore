@@ -2,4 +2,5 @@ output/*
 ensemble/*
 DART/input_priorinf*
 DART/template_priorinf*
+driver_logfile.txt
 

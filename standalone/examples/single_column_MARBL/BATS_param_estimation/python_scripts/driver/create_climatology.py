@@ -18,10 +18,8 @@ layer_file = sys.argv[4]
 clim_depths = np.array(open(layer_file, "r").read().split(','))
 clim_layers = len(clim_depths)
 
-prog        = nc.Dataset(prog_file, "r")
-prog_layers = len(prog["z_i"])
-
-clim = 12*[None]    # array of netCDF files containing daily climatologies, populated below
+prog = nc.Dataset(prog_file, "r")
+clim = 12*[None]    # array of netCDF files containing monthly climatologies, populated below
 
 # initializing the climatology records
 for month in range(12):

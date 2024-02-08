@@ -8,18 +8,18 @@
 MOM6_BIN=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/build/intel-casper/MOM6/MOM6
 CONDA_ACTIVATE=/glade/u/home/rarmstrong/work/miniconda3/bin/activate
 MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation
-OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim/obs_seq_files
+OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim
 
 # data assimilation parameters
 ENS_SIZE=3   # number of ensemble members
-EQ_YEARS=2   # number of years that MARBL will be integrated to reach quasi-equilibrium
-NUM_CYCLES=20 # number of data assimilation cycles
+EQ_YEARS=1   # number of years that MARBL will be integrated to reach quasi-equilibrium
+NUM_CYCLES=1 # number of data assimilation cycles
 
 # other
-PROG_FILE=prog_z.nc                     # the name (without path) of a MOM6 diagnostic file which records time-series for all MARBL variables with daily resolution
-LAYER_FILE=python_scripts/marbl_zl.txt  # comma-separated list of pseudo-depths in prog_z.nc
-MOM_TIMESTEP=14400                      # MOM timestep
-SEED=1                                  # random seed for generating initial parameter perturbations
+PROG_FILE=prog_z.nc                             # the name (without path) of a MOM6 diagnostic file which records time-series for all MARBL variables with daily resolution
+LAYER_FILE=python_scripts/driver/marbl_zl.txt   # comma-separated list of pseudo-depths in prog_z.nc
+MOM_TIMESTEP=14400                              # MOM timestep
+SEED=1                                          # random seed for generating initial parameter perturbations
 
 # =====================================================================================
 # ======================= MAIN PROGRAM ================================================
@@ -57,17 +57,22 @@ if [ ${process_id} -eq 1 ]; then
     echo "beginning the assimilation loop..."
 fi
 
-cycle_number=0
+cycle_number=1
 
 # data assimilation loop
-while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
-    let cycle_number=${cycle_number}+1
-
+while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
     if [ ${process_id} -eq 1 ]; then
-        echo ""
-        echo "~~~~~~~~~~~~~~~"
-        echo "CYCLE ${cycle_number}"
-        echo "~~~~~~~~~~~~~~~"
+        if [ ${cycle_number} -lt ${NUM_CYCLES} ]; then
+            echo ""
+            echo "~~~~~~~~~~~~~~~"
+            echo "CYCLE ${cycle_number}"
+            echo "~~~~~~~~~~~~~~~"
+        else
+                echo ""
+            echo "~~~~~~~~~~~~~~~"
+            echo "CYCLE ${cycle_number} (final)"
+            echo "~~~~~~~~~~~~~~~"
+        fi
 
         for i in $(seq ${ENS_SIZE}); do
             echo ""
@@ -92,13 +97,13 @@ while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
             echo "initiating record of ensemble parameter statistics..."
 
             mkdir -p ${MOM6_BATS_DIR}/output/parameter_record
-            python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "init" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
+            python3 ${MOM6_BATS_DIR}/python_scripts/driver/record_params.py "init" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
         fi
 
         echo "perturbing the ensemble parameters..."
 
         let randomseed=${SEED}+${cycle_number}
-        python3 ${MOM6_BATS_DIR}/python_scripts/perturb_params.py ${MOM6_BATS_DIR}/baseline_state ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/python_scripts/marbl_zl.txt ${randomseed} 2>&1
+        python3 ${MOM6_BATS_DIR}/python_scripts/driver/perturb_params.py ${MOM6_BATS_DIR}/baseline_state ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/python_scripts/driver/marbl_zl.txt ${randomseed} 2>&1
 
         echo "integrating the ensemble..."
         echo ""
@@ -159,7 +164,7 @@ while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
     echo "generating climatology files for member ${process_id}..." >> ${logfile}
     
     rm -f ${memberdir}/climatology/clim_*
-    python3 ${MOM6_BATS_DIR}/python_scripts/create_climatology.py ${EQ_YEARS} ${memberdir}/${PROG_FILE} ${memberdir}/climatology ${LAYER_FILE} >> ${logfile} 2>&1
+    python3 ${MOM6_BATS_DIR}/python_scripts/driver/create_climatology.py ${EQ_YEARS} ${memberdir}/${PROG_FILE} ${memberdir}/climatology ${LAYER_FILE} >> ${logfile} 2>&1
 
     touch ${MOM6_BATS_DIR}/.mom6_complete_$(printf "%04d" ${process_id})
     
@@ -191,6 +196,7 @@ while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
         let diff=${current_seconds}-${init_seconds}
 
         echo "integration wall-time: ${diff} seconds."
+
         echo "archiving MOM integration logfiles..."
 
         mkdir -p ${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/integration_logfiles
@@ -200,61 +206,73 @@ while [ ${cycle_number} -lt ${NUM_CYCLES} ]; do
             mv ${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})/${logfile} ${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/integration_logfiles/${logfile}
         done
 
-        echo "beginning data assimilation."
-        echo ""
+        echo "recording the ensemble average climatologies..."
 
-        for month in $(seq 12); do
-            if [ -f "${OBSSEQ_DIR}/BATS_clim_$(printf "%02d" ${month}).out" ]; then
-                echo "assimilating file with DART: ${OBSSEQ_DIR}/BATS_clim_$(printf "%02d" ${month}).out"
+        mkdir ${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/average_climatologies
+        python3 ${MOM6_BATS_DIR}/python_scripts/driver/average_climatologies.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${LAYER_FILE} ${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/average_climatologies 2>&1
 
-                state_list=${MOM6_BATS_DIR}/DART/ensemble_states.txt
-                param_list=${MOM6_BATS_DIR}/DART/ensemble_params.txt
+        if [ ${cycle_number} -lt ${NUM_CYCLES} ]; then
+            echo "beginning data assimilation."
+            echo ""
 
-                rm -f ${state_list}
-                rm -f ${param_list}
+            for month in $(seq 12); do
+                if [ -f "${OBSSEQ_DIR}/obs_seq_files/BATS_clim_$(printf "%02d" ${month}).out" ]; then
+                    echo "assimilating file with DART: ${OBSSEQ_DIR}/obs_seq_files/BATS_clim_$(printf "%02d" ${month}).out"
 
-                for ens_index in $(seq ${ENS_SIZE}); do
-                    echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${ens_index})/climatology/clim_$(printf "%02d" ${month}).nc" >> ${state_list}
-                    echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${ens_index})/climatology/params_$(printf "%02d" ${month}).nc" >> ${param_list}
-                done
+                    state_list=${MOM6_BATS_DIR}/DART/ensemble_states.txt
+                    param_list=${MOM6_BATS_DIR}/DART/ensemble_params.txt
 
-                out_dir=${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/month_$(printf "%02d" ${month})
-                mkdir ${out_dir}
+                    rm -f ${state_list}
+                    rm -f ${param_list}
 
-                sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='${OBSSEQ_DIR}/BATS_clim_$(printf "%02d" ${month}).out',%" ${MOM6_BATS_DIR}/DART/input.nml
-                sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='${out_dir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
+                    for ens_index in $(seq ${ENS_SIZE}); do
+                        echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${ens_index})/climatology/clim_$(printf "%02d" ${month}).nc" >> ${state_list}
+                        echo "${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${ens_index})/climatology/params_$(printf "%02d" ${month}).nc" >> ${param_list}
+                    done
 
-                back=$(pwd -P)
-                cd ${MOM6_BATS_DIR}/DART
+                    out_dir=${MOM6_BATS_DIR}/output/cycle_$(printf "%03d" ${cycle_number})/month_$(printf "%02d" ${month})
+                    mkdir ${out_dir}
 
-                ./filter >> /dev/null
+                    sed -i "s%obs_sequence_in_name.*%obs_sequence_in_name ='${OBSSEQ_DIR}/obs_seq_files/BATS_clim_$(printf "%02d" ${month}).out',%" ${MOM6_BATS_DIR}/DART/input.nml
+                    sed -i "s%obs_sequence_out_name.*%obs_sequence_out_name ='${out_dir}/obs_seq.final',%" ${MOM6_BATS_DIR}/DART/input.nml
 
-                mv preassim_mean_* ${out_dir}
-                mv preassim_sd_* ${out_dir}
-                mv analysis_mean_* ${out_dir}
-                mv analysis_sd_* ${out_dir}
-                mv output_mean_* ${out_dir}
-                mv output_sd_* ${out_dir}
-                mv dart_log.out ${out_dir}
+                    back=$(pwd -P)
+                    cd ${MOM6_BATS_DIR}/DART
 
-                for file in $(ls -I fill_inflation_restart -I filter -I model_mod_check -I obs_diag -I input.nml -I .gitignore); do
-                    rm ${file}
-                done
+                    ./filter >> /dev/null
 
-                cd ${back}
-            else
-                echo "ERROR: failed to locate obs-seq file ${OBSSEQ_DIR}/BATS_clim_$(printf "%02d" ${month}).out."
-            fi
-        done
+                    mv preassim_mean_* ${out_dir}
+                    mv preassim_sd_* ${out_dir}
+                    mv analysis_mean_* ${out_dir}
+                    mv analysis_sd_* ${out_dir}
+                    mv output_mean_* ${out_dir}
+                    mv output_sd_* ${out_dir}
+                    mv dart_log.out ${out_dir}
+
+                    for file in $(ls -I fill_inflation_restart -I filter -I model_mod_check -I obs_diag -I input.nml -I .gitignore); do
+                        rm ${file}
+                    done
+
+                    cd ${back}
+                else
+                    echo "ERROR: failed to locate obs-seq file ${OBSSEQ_DIR}/obs_seq_files/BATS_clim_$(printf "%02d" ${month}).out."
+                fi
+            done
+        fi
 
         echo "recording the current parameter statistics..."
-        python3 ${MOM6_BATS_DIR}/python_scripts/record_params.py "record" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
+        python3 ${MOM6_BATS_DIR}/python_scripts/driver/record_params.py "record" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
 
-        echo "calculating restart parameters for next cycle..."
+        if [ ${cycle_number} -lt ${NUM_CYCLES} ]; then
+            echo "calculating restart parameters for next cycle..."
 
-        let randomseed=${SEED}+${cycle_number}
-        python3 ${MOM6_BATS_DIR}/python_scripts/resample_params.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${randomseed} 2>&1
-
-        exit
+            let randomseed=${SEED}+${cycle_number}
+            python3 ${MOM6_BATS_DIR}/python_scripts/driver/resample_params.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${randomseed} 2>&1
+        else
+            echo "creating diagnostic plot..."
+            ### FILL THIS PART IN
+        fi
     fi
+
+    let cycle_number=${cycle_number}+1
 done

@@ -1,0 +1,3 @@
+/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0001/climatology/clim_03.nc
+/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0002/climatology/clim_03.nc
+/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_param_estimation/ensemble/member_0003/climatology/clim_03.nc
