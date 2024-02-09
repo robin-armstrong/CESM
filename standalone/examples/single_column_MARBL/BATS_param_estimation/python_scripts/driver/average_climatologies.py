@@ -37,10 +37,14 @@ for month in range(12):
     avg_clim["samples"][0]           = 0
 
     for var in variable_keys:
-        marbl_var          = avg_clim.createVariable("clim_"+var, "double", ("Layer",))
-        marbl_var.longname = "Climatological depth profile for "+var+"."
+        marbl_val          = avg_clim.createVariable("clim_"+var, "double", ("Layer",))
+        marbl_val.longname = "Depth profile of climatological means for "+var+" (ensemble average)."
+
+        marbl_spread          = avg_clim.createVariable("ens_stddev_"+var, "double", ("Layer",))
+        marbl_spread.longname = "Depth profile of ensemble standard deviations for "+var+" climatological means."
 
         avg_clim["clim_"+var][0:clim_layers] = np.zeros(clim_layers)
+        avg_clim["ens_stddev_"+var][0:clim_layers] = np.zeros(clim_layers)
     
     # averaging over the ensemble
     for ens_index in range(ens_size):
@@ -48,7 +52,15 @@ for month in range(12):
 
         for var in variable_keys:
             avg_clim["clim_"+var][:] += ens_data["clim_"+var][:]/ens_size
+
+            # For now, recording the average squared value in the "standard deviation" field.
+            # This is converted to a true standard deviation at the end of the script.
+            avg_clim["ens_stddev_"+var][:] += np.array(ens_data["clim_"+var][:])**2/ens_size
         
         ens_data.close()
+    
+    for var in variable_keys:
+        ens_variance               = np.array(avg_clim["ens_stddev_"+var][:]) - np.array(avg_clim["clim_"+var][:])**2
+        avg_clim["ens_stddev_"+var][:] = np.sqrt(np.maximum(ens_variance, 0.))
     
     avg_clim.close()

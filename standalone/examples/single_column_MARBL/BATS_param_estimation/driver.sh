@@ -11,9 +11,10 @@ MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components
 OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim
 
 # data assimilation parameters
-ENS_SIZE=3   # number of ensemble members
-EQ_YEARS=1   # number of years that MARBL will be integrated to reach quasi-equilibrium
-NUM_CYCLES=1 # number of data assimilation cycles
+ENS_SIZE=3         # number of ensemble members
+EQ_YEARS=3         # number of years that MARBL will be integrated to reach quasi-equilibrium
+NUM_CYCLES=1       # number of data assimilation cycles
+OBS_ERR_VAR_INF=1   # inflation value for observation error variance
 
 # other
 PROG_FILE=prog_z.nc                             # the name (without path) of a MOM6 diagnostic file which records time-series for all MARBL variables with daily resolution
@@ -53,6 +54,15 @@ if [ ${process_id} -eq 1 ]; then
     sed -i "s/num_output_state_members.*/num_output_state_members = ${ENS_SIZE}/" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "s/num_output_obs_members.*/num_output_obs_members = ${ENS_SIZE}/" ${MOM6_BATS_DIR}/DART/input.nml
     sed -i "s/ens_size.*/ens_size = ${ENS_SIZE}/" ${MOM6_BATS_DIR}/DART/input.nml
+
+    echo "regenerating empirical climatology obs_seq files..."
+
+    sed -i "s/obs_err_var_inflation.*/obs_err_var_inflation = ${OBS_ERR_VAR_INF}/" ${MOM6_BATS_DIR}/data_converter/input.nml
+    
+    back=$(pwd -P)
+    cd ${MOM6_BATS_DIR}/data_converter
+    ./bats_to_clim_obs >> /dev/null
+    cd ${back}
 
     echo "beginning the assimilation loop..."
 fi
@@ -270,7 +280,9 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
             python3 ${MOM6_BATS_DIR}/python_scripts/driver/resample_params.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${randomseed} 2>&1
         else
             echo "creating diagnostic plot..."
-            ### FILL THIS PART IN
+            
+            mkdir ${MOM6_BATS_DIR}/output/diagnostic
+            python3 ${MOM6_BATS_DIR}/python_scripts/diagnostic/clim_diag.py ${NUM_CYCLES} ${MOM6_BATS_DIR}/output ${OBSSEQ_DIR}/data/bats_climatology.nc ${MOM6_BATS_DIR}/output/diagnostic 2>&1
         fi
     fi
 
