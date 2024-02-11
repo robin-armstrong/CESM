@@ -14,11 +14,12 @@ perturb_percentage = 0.3    # standard deviation of the Gaussian random variable
 
 ################### MAIN PROGRAM ########################
 
-base_dir   = sys.argv[1]            # base parameter file that perturbations are applied to
-ens_dir    = sys.argv[2]            # top level directory for ensemble members
-ens_size   = int(sys.argv[3])
-layer_file = sys.argv[4]            # contains layer pseudo-depths for MARBL
-rng_seed   = int(sys.argv[5])       # source of randomness for parameter perturbations
+cycle_number = int(sys.argv[1])
+base_dir     = sys.argv[2]            # base parameter file that perturbations are applied to
+ens_dir      = sys.argv[3]            # top level directory for ensemble members
+ens_size     = int(sys.argv[4])
+layer_file   = sys.argv[5]            # contains layer pseudo-depths for MARBL
+rng_seed     = int(sys.argv[6])       # source of randomness for parameter perturbations
 
 os.system("cp "+base_dir+"/INPUT/marbl_in "+ens_dir+"/marbl_in_tmp")
 marbl_template = open(ens_dir+"/marbl_in_tmp", "r")
@@ -80,15 +81,18 @@ for line in marbl_template.readlines():
             pval_array   = re.findall(pval_regex, line)
             pval         = float(pval_array[0])
             
-            # perturbing the parameter and writing into MARBL and DART parameter files
+            # Writing the parameter into MARBL and DART parameter files,
+            # with perturbations if this is the first assimilation cycle.
+            
             for ens_index in range(ens_size):
-                # generating a sample from the standard normal distribution
-                t1 = rng.random()
-                t2 = rng.random()
-                x  = np.sqrt(-2*np.log(t1))*np.cos(2*np.pi*t2)
+                if(cycle_number == 1):
+                    # generating a sample from the standard normal distribution
+                    t1 = rng.random()
+                    t2 = rng.random()
+                    x  = np.sqrt(-2*np.log(t1))*np.cos(2*np.pi*t2)
 
-                # applying a log-normal multiplicative perturbation
-                pval *= np.exp(perturb_percentage*x)
+                    # applying a log-normal multiplicative perturbation
+                    pval *= np.exp(perturb_percentage*x)
 
                 marbl_out[ens_index].write(pname + " = " + str(pval) + "\n")
 

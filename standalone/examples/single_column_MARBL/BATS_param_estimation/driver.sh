@@ -11,9 +11,9 @@ MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components
 OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim
 
 # data assimilation parameters
-ENS_SIZE=3         # number of ensemble members
-EQ_YEARS=3         # number of years that MARBL will be integrated to reach quasi-equilibrium
-NUM_CYCLES=1       # number of data assimilation cycles
+ENS_SIZE=3          # number of ensemble members
+EQ_YEARS=1          # number of years that MARBL will be integrated to reach quasi-equilibrium
+NUM_CYCLES=2        # number of data assimilation cycles
 OBS_ERR_VAR_INF=1   # inflation value for observation error variance
 
 # other
@@ -94,10 +94,10 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
             cp -Lr ${MOM6_BATS_DIR}/baseline_state/* ${memberdir}
             mkdir ${memberdir}/climatology
 
-            echo "setting member 1 integration length to ${eq_days} days..."
+            echo "setting member ${i} integration length to ${eq_days} days..."
             sed -i "s/DAYMAX = .*/DAYMAX = ${eq_days}/" ${memberdir}/MOM_input
 
-            echo "setting member 1 MOM time-step to ${MOM_TIMESTEP} seconds..."
+            echo "setting member ${i} MOM time-step to ${MOM_TIMESTEP} seconds..."
             sed -i "s/DT = .*/DT = ${MOM_TIMESTEP}/" ${memberdir}/MOM_input
         done
 
@@ -110,10 +110,14 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
             python3 ${MOM6_BATS_DIR}/python_scripts/driver/record_params.py "init" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
         fi
 
-        echo "perturbing the ensemble parameters..."
+        if [ ${cycle_number} -eq 1 ]; then
+            echo "applying initial perturbations to the parameter ensemble..."
+        else
+            echo "refreshing parameter text and netCDF files..."
+        fi
 
         let randomseed=${SEED}+${cycle_number}
-        python3 ${MOM6_BATS_DIR}/python_scripts/driver/perturb_params.py ${MOM6_BATS_DIR}/baseline_state ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/python_scripts/driver/marbl_zl.txt ${randomseed} 2>&1
+        python3 ${MOM6_BATS_DIR}/python_scripts/driver/refresh_paramfiles.py ${cycle_number} ${MOM6_BATS_DIR}/baseline_state ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/python_scripts/driver/marbl_zl.txt ${randomseed} 2>&1
 
         echo "integrating the ensemble..."
         echo ""
@@ -277,7 +281,12 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
             echo "calculating restart parameters for next cycle..."
 
             let randomseed=${SEED}+${cycle_number}
-            python3 ${MOM6_BATS_DIR}/python_scripts/driver/resample_params.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${randomseed} 2>&1
+            python3 ${MOM6_BATS_DIR}/python_scripts/driver/recombine_params.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${randomseed} 2>&1
+        
+            # !!!!!!!!!!!!!!!!!
+            exit # !!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!
+        
         else
             echo "creating diagnostic plot..."
             
