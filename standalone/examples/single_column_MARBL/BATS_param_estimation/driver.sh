@@ -11,15 +11,16 @@ MOM6_BATS_DIR=/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components
 OBSSEQ_DIR=/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim
 
 # data assimilation parameters
-ENS_SIZE=3          # number of ensemble members
-EQ_YEARS=1          # number of years that MARBL will be integrated to reach quasi-equilibrium
-NUM_CYCLES=2        # number of data assimilation cycles
-OBS_ERR_VAR_INF=1   # inflation value for observation error variance
+ENS_SIZE=80          # number of ensemble members
+EQ_YEARS=40          # number of years that MARBL will be integrated to reach quasi-equilibrium
+NUM_CYCLES=10        # number of data assimilation cycles
+OBS_ERR_VAR_INF=10   # inflation value for observation error variance
 
 # other
 PROG_FILE=prog_z.nc                             # the name (without path) of a MOM6 diagnostic file which records time-series for all MARBL variables with daily resolution
 LAYER_FILE=python_scripts/driver/marbl_zl.txt   # comma-separated list of pseudo-depths in prog_z.nc
 MOM_TIMESTEP=14400                              # MOM timestep
+NO_TRACER_RELAX=true                            # set "true" to turn off tracer relaxation
 SEED=1                                          # random seed for generating initial parameter perturbations
 
 # =====================================================================================
@@ -61,7 +62,7 @@ if [ ${process_id} -eq 1 ]; then
     
     back=$(pwd -P)
     cd ${MOM6_BATS_DIR}/data_converter
-    ./bats_to_clim_obs >> /dev/null
+    #./bats_to_clim_obs >> /dev/null
     cd ${back}
 
     echo "beginning the assimilation loop..."
@@ -78,46 +79,52 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
             echo "CYCLE ${cycle_number}"
             echo "~~~~~~~~~~~~~~~"
         else
-                echo ""
+            echo ""
             echo "~~~~~~~~~~~~~~~"
             echo "CYCLE ${cycle_number} (final)"
             echo "~~~~~~~~~~~~~~~"
         fi
 
-        for i in $(seq ${ENS_SIZE}); do
-            echo ""
-            echo "resetting data for ensemble member ${i}..."
-
-            memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
-            rm -rf ${memberdir}
-            mkdir ${memberdir}
-            cp -Lr ${MOM6_BATS_DIR}/baseline_state/* ${memberdir}
-            mkdir ${memberdir}/climatology
-
-            echo "setting member ${i} integration length to ${eq_days} days..."
-            sed -i "s/DAYMAX = .*/DAYMAX = ${eq_days}/" ${memberdir}/MOM_input
-
-            echo "setting member ${i} MOM time-step to ${MOM_TIMESTEP} seconds..."
-            sed -i "s/DT = .*/DT = ${MOM_TIMESTEP}/" ${memberdir}/MOM_input
-        done
-
         echo ""
 
         if [ ${cycle_number} -eq 1 ]; then
+            for i in $(seq ${ENS_SIZE}); do
+                echo ""
+                echo "initializing data for ensemble member ${i}..."
+
+                memberdir=${MOM6_BATS_DIR}/ensemble/member_$(printf "%04d" ${i})
+                rm -rf ${memberdir}
+                mkdir ${memberdir}
+                cp -Lr ${MOM6_BATS_DIR}/baseline_state/* ${memberdir}
+                mkdir ${memberdir}/climatology
+
+                echo "setting member ${i} integration length to ${eq_days} days..."
+                sed -i "s/DAYMAX = .*/DAYMAX = ${eq_days}/" ${memberdir}/MOM_input
+
+                echo "setting member ${i} MOM time-step to ${MOM_TIMESTEP} seconds..."
+                sed -i "s/DT = .*/DT = ${MOM_TIMESTEP}/" ${memberdir}/MOM_input
+
+                # if ${NO_TRACER_RELAX}; then
+                #     echo "turning off tracer relaxation for member ${i}..."
+                    
+                #     sed -i "s/MARBL_TRACER_RESTORING_SOURCE = .*/MARBL_TRACER_RESTORING_SOURCE = \"none\"/" ${memberdir}/MOM_input
+                #     sed -i "s/MARBL_TRACER_RESTORING_RTAU_SOURCE = .*/MARBL_TRACER_RESTORING_RTAU_SOURCE = \"none\"/" ${memberdir}/MOM_input
+
+                #     sed -i "s/MARBL_TRACER_RESTORING_FILE = .*/MARBL_TRACER_RESTORING_FILE = \"none\"/" ${memberdir}/MOM_override2
+                #     sed -i "s/MARBL_TRACER_RESTORING_RTAU_FILE = .*/MARBL_TRACER_RESTORING_RTAU_FILE = \"none\"/" ${memberdir}/MOM_override2
+                # fi
+            done
+
             echo "initiating record of ensemble parameter statistics..."
 
             mkdir -p ${MOM6_BATS_DIR}/output/parameter_record
             python3 ${MOM6_BATS_DIR}/python_scripts/driver/record_params.py "init" ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/output/parameter_record/param_record.nc 2>&1
-        fi
 
-        if [ ${cycle_number} -eq 1 ]; then
             echo "applying initial perturbations to the parameter ensemble..."
-        else
-            echo "refreshing parameter text and netCDF files..."
-        fi
 
-        let randomseed=${SEED}+${cycle_number}
-        python3 ${MOM6_BATS_DIR}/python_scripts/driver/refresh_paramfiles.py ${cycle_number} ${MOM6_BATS_DIR}/baseline_state ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/python_scripts/driver/marbl_zl.txt ${randomseed} 2>&1
+            let randomseed=${SEED}+${cycle_number}
+            python3 ${MOM6_BATS_DIR}/python_scripts/driver/initialize_params.py ${MOM6_BATS_DIR}/baseline_state ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${MOM6_BATS_DIR}/python_scripts/driver/marbl_zl.txt ${randomseed} 2>&1
+        fi
 
         echo "integrating the ensemble..."
         echo ""
@@ -165,7 +172,7 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
     echo ""                                                                 >> ${logfile}
 
     cd ${memberdir}
-    ${MOM6_BIN} >> ${logfile} 2>&1
+    ${MOM6_BIN} >> /dev/null
     cd ${back}
 
     echo ""                                                                 >> ${logfile}
@@ -282,11 +289,6 @@ while [ ${cycle_number} -le ${NUM_CYCLES} ]; do
 
             let randomseed=${SEED}+${cycle_number}
             python3 ${MOM6_BATS_DIR}/python_scripts/driver/recombine_params.py ${MOM6_BATS_DIR}/ensemble ${ENS_SIZE} ${randomseed} 2>&1
-        
-            # !!!!!!!!!!!!!!!!!
-            exit # !!!!!!!!!!!!
-            # !!!!!!!!!!!!!!!!!
-        
         else
             echo "creating diagnostic plot..."
             

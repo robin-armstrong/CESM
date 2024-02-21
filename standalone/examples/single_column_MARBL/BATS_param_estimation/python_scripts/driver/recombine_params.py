@@ -6,7 +6,7 @@ import netCDF4 as nc
 
 ################### SCRIPT PARAMETERS ###################
 
-paramlist = ["autotroph_settings(1)%kDOP"]
+paramlist = ["autotroph_settings(2)%alphaPI_per_day"]
 
 # The "mode" parameter has three options, which control how the parameters
 # are recombined:
@@ -20,7 +20,7 @@ paramlist = ["autotroph_settings(1)%kDOP"]
 
 mode = "ens_avg"
 
-perturb_size = 3.0      # standard deviation of parameter perturbations
+perturb_size = 0.3      # standard deviation of parameter perturbations
                         # in log-space, for when mode == "ens_avg."
 
 def getvalue(param_array):
@@ -36,9 +36,10 @@ num_params = len(paramlist)
 
 rng = np.random.default_rng(seed = rng_seed)
 
-marbl_tmp = ens_size*[None]
-marbl_out = ens_size*[None]
-dart_in   = np.zeros((ens_size, 12, num_params))
+marbl_tmp  = ens_size*[None]
+marbl_out  = ens_size*[None]
+dart_nc    = ens_size*[None]
+dart_pvals = np.zeros((ens_size, 12, num_params))
 
 output_params = np.zeros((ens_size, num_params))
 
@@ -50,30 +51,30 @@ for ens_index in range(ens_size):
     marbl_tmp[ens_index] = open(member_input+"/marbl_in_tmp", "r")
     marbl_out[ens_index] = open(member_input+"/marbl_in", "w")
 
+    dart_nc[ens_index] = 12*[None]
+
     for month_index in range(12):
-        ncfile = nc.Dataset(ens_path+"/member_"+("%04d" % (ens_index + 1))+"/climatology/params_"+("%02d" % (month_index + 1))+".nc", "r")
+        dart_nc[ens_index][month_index] = nc.Dataset(ens_path+"/member_"+("%04d" % (ens_index + 1))+"/climatology/params_"+("%02d" % (month_index + 1))+".nc", "a")
         
         for param_index in range(num_params):
             pname = paramlist[param_index]
-            dart_in[ens_index, month_index] = getvalue(ncfile[pname][:])
+            dart_pvals[ens_index, month_index] = getvalue(dart_nc[ens_index][month_index][pname][:])
         
-        ncfile.close()
-
 # setting output parameter values
 if(mode == "resample"):
     for ens_index in range(ens_size):
         for param_index in range(num_params):
             month_index = int(np.floor(12*rng.random()))
-            output_params[ens_index, param_index] = dart_in[ens_index, month_index, param_index]
+            output_params[ens_index, param_index] = dart_pvals[ens_index, month_index, param_index]
 
 elif(mode == "year_avg"):
     for ens_index in range(ens_size):
         for param_index in range(num_params):
-            output_params[ens_index, param_index] = np.mean(dart_in[ens_index, :, param_index])
+            output_params[ens_index, param_index] = np.exp(np.mean(np.log(dart_pvals[ens_index, :, param_index])))
 
 elif(mode == "ens_avg"):
     for param_index in range(num_params):
-        param_avg = np.mean(dart_in[:, :, param_index])
+        param_avg = np.mean(np.log(dart_pvals[:, :, param_index]))
 
         for ens_index in range(ens_size):
             # generating a sample from the standard normal distribution
@@ -84,12 +85,12 @@ elif(mode == "ens_avg"):
             t = rng.random()
             x = np.sqrt(-2*np.log(u))*np.cos(2*t*np.pi)
 
-            # log-normal perturbation of the average parameter value
-            output_params[ens_index, param_index] = param_avg*np.exp(perturb_size*x)
+            # Gaussian perturbation of the average parameter value in log-space
+            output_params[ens_index, param_index] = np.exp(param_avg + perturb_size*x)
 else:
     raise ValueError("unknown parameter recombination mode, '"+mode+"'")
 
-# writing the parameters into MARBL-readable text files
+# writing the parameters into MARBL-readable text files and DART-readable netCDF files
 
 pname_regex = re.compile(r'^[^\s]+') # regex to extract parameter names
 
@@ -107,7 +108,15 @@ for ens_index in range(ens_size):
         for param_index in range(len(paramlist)):
             if(pname == paramlist[param_index]):
                 in_paramlist  = True
+
+                # writing the parameter into the MARBL-readable file
                 marbl_out[ens_index].write(pname+" = "+str(output_params[ens_index, param_index])+"\n")
+
+                # writing the parameter into the DART-readable files
+                
+                for month_index in range(12):
+                    layernum = len(dart_nc[ens_index][month_index][pname][:])
+                    dart_nc[ens_index][month_index][pname][:] = output_params[ens_index, param_index]*np.ones(layernum)
         
         if(not in_paramlist):
             marbl_out[ens_index].write(line)
@@ -117,3 +126,6 @@ for ens_index in range(ens_size):
     marbl_tmp[ens_index].close()
 
     os.system("rm "+ens_path+"/member_"+("%04d" % (ens_index + 1))+"/INPUT/marbl_in_tmp")
+
+    for month_index in range(12):
+        dart_nc[ens_index][month_index].close()

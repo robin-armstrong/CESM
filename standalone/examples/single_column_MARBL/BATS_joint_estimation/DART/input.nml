@@ -53,8 +53,8 @@
    async                        = 0,
    adv_ens_command              = "./advance_model.csh",
 
-   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files/BATS_148103.out',
-   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/output/148103/obs_seq.final',
+   obs_sequence_in_name ='/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS/obs_seq_files/BATS_149468.out',
+   obs_sequence_out_name ='/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/output/149468/obs_seq.final',
    num_output_obs_members = 80,
    init_time_days               = -1,
    init_time_seconds            = -1,
@@ -128,14 +128,13 @@
    /
 
 &obs_kind_nml
-   assimilate_these_obs_types = ''
-   evaluate_these_obs_types   = 'BATS_OXYGEN',
+   assimilate_these_obs_types = 'BATS_OXYGEN',
                                 'BATS_ALKALINITY',
                                 'BATS_INORGANIC_CARBON',
-	                        'BATS_SILICATE',
-	                        'BATS_PHOSPHATE',
+	                             'BATS_SILICATE',
+	                             'BATS_PHOSPHATE',
                                 'BATS_NITRATE',
-                                'BATS_ORGANIC_CARBON',
+   evaluate_these_obs_types   = 'BATS_ORGANIC_CARBON',
                                 'BATS_NITROGEN'
    /
 
@@ -157,7 +156,7 @@
                            'mesozooC ', 'QTY_MESOZOOPLANKTON_CARBON    ', '0.0', 'NA', 'UPDATE      ',
                            'h        ', 'QTY_LAYER_THICKNESS           ', '0.0', 'NA', 'NO_COPY_BACK'
    estimate_params       = .true.
-   model_parameters      = 'autotroph_settings(1)%kDOP ', 'QTY_PARAM_AUTOTROPH1_KDOP ', '0.0', 'NA', 'UPDATE'
+   model_parameters      = 'autotroph_settings(2)%alphaPI_per_day ', 'QTY_PARAM_AUTOTROPH2_ALPHAPI ', '0.0', 'NA', 'UPDATE'
    /
 
 &utilities_nml

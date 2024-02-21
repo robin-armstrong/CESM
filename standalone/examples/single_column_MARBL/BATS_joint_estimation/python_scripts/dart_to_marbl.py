@@ -5,7 +5,7 @@ import netCDF4 as nc
 
 ################### SCRIPT PARAMETERS ###################
 
-paramlist = ["autotroph_settings(1)%kDOP"]
+paramlist = ["autotroph_settings(2)%alphaPI_per_day"]
 
 numlayers = 65
 

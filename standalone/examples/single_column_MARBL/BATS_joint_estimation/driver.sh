@@ -162,10 +162,11 @@ do
             mv ${MOM6_BATS_DIR}/DART/dart_log.out ${outputdir}
             mv ${MOM6_BATS_DIR}/DART/output_mean* ${outputdir}
             mv ${MOM6_BATS_DIR}/DART/output_sd* ${outputdir}
-            mv ${MOM6_BATS_DIR}/DART/preassim* ${outputdir}
-            mv ${MOM6_BATS_DIR}/DART/analysis* ${outputdir}
             mv ${MOM6_BATS_DIR}/DART/input_priorinf* ${outputdir}
             mv ${MOM6_BATS_DIR}/DART/output_priorinf* ${outputdir}
+
+            rm ${MOM6_BATS_DIR}/DART/preassim*
+            rm ${MOM6_BATS_DIR}/DART/analysis*
 
             echo "recording the current parameter statistics..."
 
@@ -211,6 +212,8 @@ do
         if [ -f "${MOM6_BATS_DIR}/.begin_mom6_$(printf "%04d" ${process_id})" ]; then
             rm ${MOM6_BATS_DIR}/.begin_mom6_$(printf "%04d" ${process_id})
             break
+        else
+            sleep 1
         fi
 
         # checking for an "exit" signal from process no. 1

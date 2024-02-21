@@ -5,7 +5,7 @@ import netCDF4 as nc
 
 ################### SCRIPT PARAMETERS ###################
 
-paramlist = ["autotroph_settings(1)%kDOP"]
+paramlist = ["autotroph_settings(2)%alphaPI_per_day"]
 ens_path  = "/glade/work/rarmstrong/cesm/cesm2_3_alpha12b+mom6_marbl/components/mom/standalone/examples/single_column_MARBL/BATS_joint_estimation/ensemble"
 
 ################### MAIN PROGRAM ########################
@@ -40,7 +40,7 @@ elif(mode == "record"):
         pval_regex  = re.compile(r'[^\s]+$')
 
         for member_id in range(1, ens_size + 1):
-            pfile    = ens_path+"/member_"+("{:04d}".format(member_id))+"/INPUT/marbl_in"
+            pfile    = ens_path+"/member_"+("{:04d}".format(member_id))+"/marbl_in"
             marbl_in = open(pfile, "r")
 
             for line in marbl_in.readlines():

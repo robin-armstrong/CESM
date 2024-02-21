@@ -2,7 +2,7 @@
 &bats_to_clim_obs_nml
    text_input_file       = "/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim/data/bats_climatology.txt"
    max_lines             = 3000
-   obs_err_var_inflation = 1
+   obs_err_var_inflation = 10
    obs_out_dir           = '/glade/u/home/rarmstrong/work/DART/observations/obs_converters/BATS_clim/obs_seq_files',
    debug                 = .true.
   /

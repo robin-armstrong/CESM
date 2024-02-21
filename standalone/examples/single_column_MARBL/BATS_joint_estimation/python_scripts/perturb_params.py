@@ -4,7 +4,7 @@ import numpy as np
 
 ################### SCRIPT PARAMETERS ###################
 
-paramlist = ["autotroph_settings(1)%kDOP"]
+paramlist = ["autotroph_settings(2)%alphaPI_per_day"]
 
 perturb_percentage = 0.3    # standard deviation of the Gaussian random variable
                             # which is used to create a multiplicative log-normal
